@@ -55,8 +55,18 @@ parseSymbol :: Parser Value
 parseSymbol = do
     skipSpace
     c <- satisfy (inClass "a-zA-Z.*/!?+_-")
-    x <- takeWhile (inClass "a-zA-Z0-9#:.*/!?+_-")
-    return $! symbol "" (BS.cons c x)
+    (ns, val) <- withNS c <|> withoutNS c
+    return $! symbol ns val
+    where
+        withNS c = do
+            ns <- takeWhile (inClass "a-zA-Z0-9#:.*!?+_-")
+            char '/'
+            val <- takeWhile (inClass "a-zA-Z0-9#:.*/!?+_-")
+            return (c `BS.cons` ns, val)
+
+        withoutNS c = do
+            val <- takeWhile (inClass "a-zA-Z0-9#:.*/!?+_-")
+            return ("", c `BS.cons` val)
 
 parseKeyword :: Parser Value
 parseKeyword = do
