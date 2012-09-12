@@ -144,8 +144,8 @@ parseValue = skipSpace >> parseSet <|> parseMap
           <|> parseCharacter
           <|> parseString
 
-parseTag :: Parser (Maybe (BS.ByteString, BS.ByteString))
-parseTag = do
+parseTagged :: Parser TaggedValue
+parseTagged = do
     skipSpace
     withNS <|> withoutNS <|> noTag
     where
@@ -154,17 +154,15 @@ parseTag = do
             ns <- takeWhile (inClass "a-zA-Z0-9-")
             char '/'
             tag <- takeWhile (inClass "a-zA-Z0-9-")
-            return $! Just (ns, tag)
+            value <- parseValue
+            return $! Tagged value ns tag
+
         withoutNS = do
             char '#'
             tag <- takeWhile (inClass "a-zA-Z0-9-")
-            return $! Just ("", tag)
+            value <- parseValue
+            return $! Tagged value "" tag
+
         noTag = do
-            return $! Nothing
-
-
-parseTagged :: Parser TaggedValue
-parseTagged = do
-    tag <- parseTag
-    val <- parseValue
-    return $! wrapTagged tag val
+            value <- parseValue
+            return $! NoTag value

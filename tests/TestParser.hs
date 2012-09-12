@@ -12,7 +12,30 @@ import Control.Monad (mapM_)
 import System.Exit (exitFailure, exitSuccess)
 import qualified System.Console.ANSI as ANSI
 
-main = mapM_ check cases
+main = do
+    mapM_ check cases
+    mapM_ checkTagged casesTagged
+
+checkTagged (input, output, rest) = do
+    putStr "Checking: '"
+    BSL.putStr input
+    putStrLn "'"
+
+    putStr $ "Should be: " ++ show output
+    if BSL.null rest
+        then putStrLn ""
+        else putStrLn $ " (" ++ BSL.unpack rest ++ ")"
+
+    let result = parse P.parseTagged input
+    let correct = case result of
+                      Done r o -> r == rest && o == output
+                      _ -> False
+
+    ANSI.setSGR [ANSI.SetColor ANSI.Foreground ANSI.Vivid (if correct then ANSI.Green else ANSI.Red)]
+    putStr "Result: "
+    ANSI.setSGR [ANSI.Reset]
+    print result
+    putStrLn ""
 
 check (input, output, rest) = do
     putStr "Checking: '"
@@ -74,6 +97,10 @@ cases = [ ("nil", Nil, "")
         , ("#{a b [1 2 3]}", sampleSet, "")
         ]
 
+casesTagged = [ ("#myapp/Person {:first \"Fred\" :last \"Mertz\"}", E.Tagged sampleTaggedMap "myapp" "Person", "")
+              , ("#{a b [1 2 3]}", E.NoTag sampleSet, "")
+              ]
+
 sampleList = E.List [E.symbol "" "a", E.symbol "" "b", E.Integer 42]
 
 sampleVec = E.makeVec [E.symbol "" "a", E.symbol "" "b", E.Integer 42]
@@ -86,3 +113,7 @@ sampleSet = E.makeSet [ E.symbol "" "a"
                       , E.symbol "" "b"
                       , E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3]
                       ]
+
+sampleTaggedMap = E.makeMap [ (E.Keyword "first", E.String "Fred")
+                            , (E.Keyword "last", E.String "Mertz")
+                            ]
