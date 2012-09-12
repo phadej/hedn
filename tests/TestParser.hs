@@ -67,8 +67,10 @@ cases = [ ("nil", Nil, "")
         , ("\"a nice string\"", E.String "a nice string", "")
         , ("\"split\\second \\t\\rai\\n\"", E.String "split\\second \t\rai\n", "")
         , ("\"test \\\"sausage\\\" shmest\"", E.String "test \"sausage\" shmest", "")
+        , ("\"\"", E.String "", "")
 
         , ("\\c", E.Character 'c', "")
+        , ("\\\\", E.Character '\\', "")
         , ("\\newline", E.Character '\n', "")
         , ("\\space", E.Character ' ', "")
         , ("\\tab", E.Character '\t', "")
@@ -89,12 +91,16 @@ cases = [ ("nil", Nil, "")
         -- ...and many other strange stuff...
 
         , ("(a b 42)", sampleList, "")
+        , ("()", E.List [], "")
 
         , ("[a b 42]", sampleVec, "")
+        , ("[]", E.makeVec [], "")
 
         , ("{:a 1 \"foo\" :bar [1 2 3] four}", sampleMap, "")
+        , ("{}", E.makeMap [], "")
 
         , ("#{a b [1 2 3]}", sampleSet, "")
+        , ("#{}", E.makeSet [], "")
 
         , ("[a b #_foo 42]", sampleDiscard, "")
         ]
