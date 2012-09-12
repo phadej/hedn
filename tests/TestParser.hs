@@ -103,6 +103,7 @@ cases = [ ("nil", Nil, "")
         , ("#{}", E.makeSet [], "")
 
         , ("[a b #_foo 42]", sampleDiscard, "")
+        , ("(1 2 ;more to go!\n 3 4)", sampleComment, "")
         ]
 
 casesTagged = [ ("#myapp/Person {:first \"Fred\" :last \"Mertz\"}", E.Tagged sampleTaggedMap "myapp" "Person", "")
@@ -124,6 +125,7 @@ sampleSet = E.makeSet [ E.symbol "" "a"
                       ]
 
 sampleDiscard = E.makeVec [E.symbol "" "a", E.symbol "" "b", E.Integer 42]
+sampleComment = E.List [E.Integer 1, E.Integer 2, E.Integer 3, E.Integer 4]
 
 sampleTaggedMap = E.makeMap [ (E.Keyword "first", E.String "Fred")
                             , (E.Keyword "last", E.String "Mertz")

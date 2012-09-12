@@ -144,6 +144,7 @@ parseDiscard = do
 parseValue :: Parser Value
 parseValue = do
     skipSpace
+    skipMany skipComment
     skipMany parseDiscard
 
     parseSet <|> parseMap
