@@ -8,6 +8,8 @@ import Data.Attoparsec.Combinator
 import Control.Applicative (pure, (<|>), (*>))
 import Data.Text.Encoding (decodeUtf8)
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as BSL
+import Data.ByteString.Search (replace)
 
 import Data.EDN.Types
 
@@ -36,9 +38,18 @@ parseString :: Parser Value
 parseString = do
     skipSpace
     char '"'
-    x <- takeWhile (/= '"')
+
+    x <- A.scan False $ \s c -> if s then Just False
+                                     else if c == '"'
+                                          then Nothing
+                                          else Just (c == '\\')
     char '"'
-    return $! String (decodeUtf8 x)
+
+    if '\\' `BS.elem` x
+        then return $! String . decodeUtf8 . rep "\\\"" "\"". rep "\\\\" "\\" . rep "\\n" "\n" . rep "\\r" "\r" . rep "\\t" "\t" $ x
+        else return $! String . decodeUtf8 $ x
+
+    where rep f t s = BS.concat . BSL.toChunks $! replace (BS.pack f) (BS.pack t) s
 
 parseCharacter :: Parser Value
 parseCharacter = do

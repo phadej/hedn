@@ -42,7 +42,7 @@ cases = [ ("nil", Nil, "")
         , ("false", E.Boolean False, "")
 
         , ("\"a nice string\"", E.String "a nice string", "")
-        , ("\"split\\nsecond \\t\\rai\\n\"", E.String "split\nsecond \t\rai\n", "")
+        , ("\"split\\second \\t\\rai\\n\"", E.String "split\\second \t\rai\n", "")
         , ("\"test \\\"sausage\\\" shmest\"", E.String "test \"sausage\" shmest", "")
 
         , ("\\c", E.Character 'c', "")
