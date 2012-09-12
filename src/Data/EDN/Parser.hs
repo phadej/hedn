@@ -135,14 +135,24 @@ parseSet = do
 skipComment :: Parser ()
 skipComment = skipSpace >> char ';' >> skipWhile (/= '\n')
 
+parseDiscard :: Parser ()
+parseDiscard = do
+    string "#_"
+    parseValue
+    return ()
+
 parseValue :: Parser Value
-parseValue = skipSpace >> parseSet <|> parseMap
-          <|> parseVector <|> parseList
-          <|> parseNil <|> parseBool
-          <|> parseNumber
-          <|> parseKeyword <|> parseSymbol
-          <|> parseCharacter
-          <|> parseString
+parseValue = do
+    skipSpace
+    skipMany parseDiscard
+
+    parseSet <|> parseMap
+             <|> parseVector <|> parseList
+             <|> parseNil <|> parseBool
+             <|> parseNumber
+             <|> parseKeyword <|> parseSymbol
+             <|> parseCharacter
+             <|> parseString
 
 parseTagged :: Parser TaggedValue
 parseTagged = do
