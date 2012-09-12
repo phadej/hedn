@@ -50,10 +50,10 @@ cases = [ ("nil", Nil, "")
         , ("\\space", E.Character ' ', "")
         , ("\\tab", E.Character '\t', "")
 
-        , ("justasymbol", E.Symbol "justasymbol", "")
-        , ("with#stuff:inside", E.Symbol "with#stuff:inside", "")
-        , ("/", E.Symbol "/", "")
-        , ("my-namespace/foo", E.Symbol "foo", "")
+        , ("justasymbol", E.symbol "" "justasymbol", "")
+        , ("with#stuff:inside", E.symbol "" "with#stuff:inside", "")
+        , ("my-namespace/foo", E.symbol "my-namespace" "foo", "")
+        , ("/", E.symbol "" "/", "")
 
         , (":fred", E.Keyword "fred", "")
         , (":my/fred", E.Keyword "my/fred", "")
@@ -74,15 +74,15 @@ cases = [ ("nil", Nil, "")
         , ("#{a b [1 2 3]}", sampleSet, "")
         ]
 
-sampleList = E.List [E.Symbol "a", E.Symbol "b", E.Integer 42]
+sampleList = E.List [E.symbol "" "a", E.symbol "" "b", E.Integer 42]
 
-sampleVec = E.makeVec [E.Symbol "a", E.Symbol "b", E.Integer 42]
+sampleVec = E.makeVec [E.symbol "" "a", E.symbol "" "b", E.Integer 42]
 
 sampleMap = E.makeMap [ (E.Keyword "a",                                     E.Integer 1)
                       , (E.String "foo",                                    E.Keyword "bar")
-                      , (E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3], E.Symbol "four")
+                      , (E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3], E.symbol "" "four")
                       ]
-sampleSet = E.makeSet [ E.Symbol "a"
-                      , E.Symbol "b"
+sampleSet = E.makeSet [ E.symbol "" "a"
+                      , E.symbol "" "b"
                       , E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3]
                       ]

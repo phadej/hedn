@@ -2,6 +2,7 @@ module Data.EDN.Types where
 
 import Data.Text (Text)
 import Data.ByteString.Char8 (ByteString)
+import qualified Data.Hashable as H
 import qualified Data.Vector as V
 import qualified Data.Map as M
 import qualified Data.Set as S
@@ -10,7 +11,7 @@ data Value = Nil
            | Boolean Bool
            | String Text
            | Character Char
-           | Symbol ByteString
+           | Symbol Int
            | Keyword ByteString
            | Integer Int
            | Floating Double
@@ -26,6 +27,9 @@ data TaggedValue = NoTag { val :: Value }
 wrapTagged :: Maybe (ByteString, ByteString) -> Value -> TaggedValue
 wrapTagged Nothing value              = NoTag value
 wrapTagged (Just (prefix, tag)) value = Tagged value prefix tag
+
+symbol :: ByteString -> ByteString -> Value
+symbol ns key = Symbol (H.hash ns `H.combine` H.hash key)
 
 makeVec :: [Value] -> Value
 makeVec = Vec . V.fromList

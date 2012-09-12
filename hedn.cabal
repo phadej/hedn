@@ -18,7 +18,7 @@ cabal-version:       >=1.8
 library
   exposed-modules:     Data.EDN, Data.EDN.Types, Data.EDN.Parser
   hs-source-dirs:      src/
-  build-depends:       base ==4.5.*, attoparsec, text, bytestring, containers, vector
+  build-depends:       base ==4.5.*, attoparsec, text, bytestring, containers, vector, hashable
 
 Test-Suite test-parser
     type:              exitcode-stdio-1.0

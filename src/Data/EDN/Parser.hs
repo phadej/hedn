@@ -44,15 +44,19 @@ parseCharacter :: Parser Value
 parseCharacter = do
     skipSpace
     char '\\'
-    c <- anyChar
-    return $! Character c
+    x <- string "newline" <|> string "space" <|> string "tab" <|> A.take 1
+    return . Character $! case x of
+                              "newline" -> '\n'
+                              "space" -> ' '
+                              "tab" -> '\t'
+                              _ -> BS.head x
 
 parseSymbol :: Parser Value
 parseSymbol = do
     skipSpace
     c <- satisfy (inClass "a-zA-Z.*/!?+_-")
     x <- takeWhile (inClass "a-zA-Z0-9#:.*/!?+_-")
-    return $! Symbol (BS.cons c x)
+    return $! symbol "" (BS.cons c x)
 
 parseKeyword :: Parser Value
 parseKeyword = do
