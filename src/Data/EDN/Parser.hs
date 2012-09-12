@@ -27,7 +27,7 @@ parseNil :: Parser Value
 parseNil = do
     skipSpace
     A.string "nil"
-    return $! Nil
+    return Nil
 
 parseBool :: Parser Value
 parseBool = choice [ string "true" *> pure (Boolean True)
@@ -121,7 +121,7 @@ parseMap = do
         parseAssoc = do
             key <- parseValue
             val <- parseValue
-            return $! (key, val)
+            return (key, val)
 
 parseSet :: Parser Value
 parseSet = do
