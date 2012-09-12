@@ -72,11 +72,11 @@ parseSymbol = do
         withNS c = do
             ns <- takeWhile (inClass "a-zA-Z0-9#:.*!?+_-")
             char '/'
-            val <- takeWhile (inClass "a-zA-Z0-9#:.*/!?+_-")
+            val <- takeWhile (inClass "a-zA-Z0-9#:.*!?+_-")
             return (c `BS.cons` ns, val)
 
         withoutNS c = do
-            val <- takeWhile (inClass "a-zA-Z0-9#:.*/!?+_-")
+            val <- takeWhile (inClass "a-zA-Z0-9#:.*!?+_-")
             return ("", c `BS.cons` val)
 
 parseKeyword :: Parser Value
