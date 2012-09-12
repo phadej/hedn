@@ -16,6 +16,7 @@ import Data.EDN.Types
 isSpaceOrComma :: Char -> Bool
 isSpaceOrComma ' ' = True
 isSpaceOrComma '\r' = True
+isSpaceOrComma '\n' = True
 isSpaceOrComma '\t' = True
 isSpaceOrComma ',' = True
 isSpaceOrComma _ = False
@@ -23,20 +24,25 @@ isSpaceOrComma _ = False
 spaceOrComma :: Parser Char
 spaceOrComma = satisfy isSpaceOrComma <?> "space/comma"
 
+skipSoC :: Parser ()
+skipSoC = skipWhile isSpaceOrComma
+
 parseNil :: Parser Value
 parseNil = do
-    skipSpace
+    skipSoC
     A.string "nil"
     return Nil
 
 parseBool :: Parser Value
-parseBool = choice [ string "true" *> pure (Boolean True)
+parseBool = do
+    skipSoC
+    choice [ string "true" *> pure (Boolean True)
            , string "false" *> pure (Boolean False)
            ]
 
 parseString :: Parser Value
 parseString = do
-    skipSpace
+    skipSoC
     char '"'
 
     x <- A.scan False $ \s c -> if s then Just False
@@ -53,7 +59,7 @@ parseString = do
 
 parseCharacter :: Parser Value
 parseCharacter = do
-    skipSpace
+    skipSoC
     char '\\'
     x <- string "newline" <|> string "space" <|> string "tab" <|> A.take 1
     return . Character $! case x of
@@ -64,7 +70,7 @@ parseCharacter = do
 
 parseSymbol :: Parser Value
 parseSymbol = do
-    skipSpace
+    skipSoC
     c <- satisfy (inClass "a-zA-Z.*/!?+_-")
     (ns, val) <- withNS c <|> withoutNS c
     return $! symbol ns val
@@ -81,14 +87,14 @@ parseSymbol = do
 
 parseKeyword :: Parser Value
 parseKeyword = do
-    skipSpace
+    skipSoC
     char ':'
     x <- takeWhile (inClass "a-zA-Z0-9.*/!?+_-")
     return $! Keyword x
 
 parseNumber :: Parser Value
 parseNumber = do
-    skipSpace
+    skipSoC
     n <- number
     case n of
         I i -> return $! Integer i
@@ -96,7 +102,7 @@ parseNumber = do
 
 parseList :: Parser Value
 parseList = do
-    skipSpace
+    skipSoC
     char '('
     vs <- parseValue `sepBy` spaceOrComma
     char ')'
@@ -104,7 +110,7 @@ parseList = do
 
 parseVector :: Parser Value
 parseVector = do
-    skipSpace
+    skipSoC
     char '['
     vs <- parseValue `sepBy` spaceOrComma
     char ']'
@@ -112,7 +118,7 @@ parseVector = do
 
 parseMap :: Parser Value
 parseMap = do
-    skipSpace
+    skipSoC
     char '{'
     pairs <- parseAssoc `sepBy` spaceOrComma
     char '}'
@@ -125,7 +131,7 @@ parseMap = do
 
 parseSet :: Parser Value
 parseSet = do
-    skipSpace
+    skipSoC
     char '#'
     char '{'
     vs <- parseValue `sepBy` spaceOrComma
@@ -133,17 +139,18 @@ parseSet = do
     return $! makeSet vs
 
 skipComment :: Parser ()
-skipComment = skipSpace >> char ';' >> skipWhile (/= '\n')
+skipComment = skipSoC >> char ';' >> skipWhile (/= '\n')
 
 parseDiscard :: Parser ()
 parseDiscard = do
+    skipSoC
     string "#_"
     parseValue
     return ()
 
 parseValue :: Parser Value
 parseValue = do
-    skipSpace
+    skipSoC
     skipMany skipComment
     skipMany parseDiscard
 
@@ -157,7 +164,7 @@ parseValue = do
 
 parseTagged :: Parser TaggedValue
 parseTagged = do
-    skipSpace
+    skipSoC
     withNS <|> withoutNS <|> noTag
     where
         withNS = do
