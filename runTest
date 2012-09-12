@@ -1,0 +1,1 @@
+clear && cabal-dev build && clear && cabal-dev test && clear && cat dist/test/hedn-*-test-parser.log
