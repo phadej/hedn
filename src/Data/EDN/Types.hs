@@ -13,7 +13,7 @@ data Value = Nil
            | Character Char
            | Symbol Int
            | Keyword ByteString
-           | Integer Int
+           | Integer Integer
            | Floating Double
            | List [Value]
            | Vec (V.Vector Value)

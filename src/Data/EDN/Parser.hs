@@ -75,17 +75,13 @@ parseKeyword = do
     x <- takeWhile (inClass "a-zA-Z0-9.*/!?+_-")
     return $! Keyword x
 
-parseInteger :: Parser Value
-parseInteger = do
+parseNumber :: Parser Value
+parseNumber = do
     skipSpace
-    i <- decimal
-    return $! Integer i
-
-parseFloating :: Parser Value
-parseFloating = do
-    skipSpace
-    f <- fromIntegral `fmap` decimal
-    return $! Floating f
+    n <- number
+    case n of
+        I i -> return $! Integer i
+        D d -> return $! Floating d
 
 parseList :: Parser Value
 parseList = do
@@ -132,7 +128,7 @@ parseValue :: Parser Value
 parseValue = skipSpace >> parseSet <|> parseMap
           <|> parseVector <|> parseList
           <|> parseNil <|> parseBool
-          <|> parseInteger <|> parseFloating
+          <|> parseNumber
           <|> parseKeyword <|> parseSymbol
           <|> parseCharacter
           <|> parseString
