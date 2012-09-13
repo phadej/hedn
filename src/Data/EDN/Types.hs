@@ -1,7 +1,9 @@
 module Data.EDN.Types (
     -- * Types
-
     TaggedValue(..), Value(..),
+
+    -- ** Internal containers
+    EDNList, EDNVec, EDNSet, EDNMap, Pair,
 
     -- * Tag manipulation
     setTag, getTag, stripTag,
@@ -17,7 +19,7 @@ module Data.EDN.Types (
     integer, floating,
 
     -- ** Containers
-    makeList, makeVec, makeSet, makeMap
+    makeList, makeVec, makeSet, makeMap, (..=)
 ) where
 
 import Data.String (IsString(..))
@@ -54,10 +56,13 @@ data TaggedValue = NoTag !Value
                  | Tagged !Value !ByteString !ByteString
                  deriving (Eq, Ord, Show)
 
+-- | Strings starting with \":\" will become keywords.
 instance IsString Value where
-  fromString = String . T.pack
+  fromString (':':s) = Keyword . BS.pack $ s
+  fromString s = String . T.pack $ s
   {-# INLINE fromString #-}
 
+-- | Strings will become an tagless EDN strings.
 instance IsString TaggedValue where
   fromString = string . T.pack
   {-# INLINE fromString #-}
@@ -160,7 +165,15 @@ makeSet :: [TaggedValue] -> Value
 makeSet = Set . S.fromList
 {-# INLINE makeSet #-}
 
+-- | A key\/value pair for a EDN Map
+type Pair = (Value, TaggedValue)
+
 -- | Create an EDN 'Map' from a assoc list with untagged keys and tagged values.
-makeMap :: [(Value, TaggedValue)] -> Value
+makeMap :: [Pair] -> Value
 makeMap = Map . M.fromList
 {-# INLINE makeMap #-}
+
+-- | Construct a 'Pair' from a key (as EDN keyword) and a value.
+(..=) :: ByteString -> TaggedValue -> Pair
+name ..= value = (Keyword name, value)
+{-# INLINE (..=) #-}

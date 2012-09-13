@@ -16,7 +16,7 @@ module Data.EDN (
     integer, floating,
 
     -- ** Containers
-    makeList, makeVec, makeSet, makeMap,
+    makeList, makeVec, makeSet, makeMap, (..=),
 
     -- * Encoding
     encode, fromValue, fromTagged,

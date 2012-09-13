@@ -77,7 +77,7 @@ cases = [ ("nil", E.nil)
         , ("[a b 42]", sampleVec)
         , ("[]", E.NoTag $ E.makeVec [])
 
-        , ("{:a 1 \"foo\" :bar [1 2 3] four}", sampleMap)
+        , ("{:a 1, \"foo\" :bar, [1 2 3] four}", sampleMap)
         , ("{}", E.NoTag $ E.makeMap [])
 
         , ("#{a b [1 2 3]}", sampleSet)
@@ -97,7 +97,7 @@ sampleVec :: E.TaggedValue
 sampleVec = E.NoTag $ E.makeVec [E.symbol "a", E.symbol "b", E.integer 42]
 
 sampleMap :: E.TaggedValue
-sampleMap = E.NoTag $ E.makeMap [ (E.Keyword "a",                                     E.integer 1)
+sampleMap = E.NoTag $ E.makeMap [ (":a",                                              E.integer 1)
                                 , ("foo",                                             E.keyword "bar")
                                 , (E.makeVec [E.integer 1, E.integer 2, E.integer 3], E.symbol "four")
                                 ]
@@ -115,6 +115,4 @@ sampleComment :: E.TaggedValue
 sampleComment = E.NoTag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.integer 4]
 
 sampleTaggedMap :: E.Value
-sampleTaggedMap = E.makeMap [ (E.Keyword "first", "Fred")
-                            , (E.Keyword "last", "Mertz")
-                            ]
+sampleTaggedMap = E.makeMap [ "first" ..= "Fred", "last" ..= "Mertz" ]
