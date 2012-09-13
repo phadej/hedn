@@ -75,10 +75,10 @@ cases = [ ("nil", Nil, "")
         , ("\\space", E.Character ' ', "")
         , ("\\tab", E.Character '\t', "")
 
-        , ("justasymbol", E.symbol "" "justasymbol", "")
-        , ("with#stuff:inside", E.symbol "" "with#stuff:inside", "")
-        , ("my-namespace/foo", E.symbol "my-namespace" "foo", "")
-        , ("/", E.symbol "" "/", "")
+        , ("justasymbol", E.Symbol "" "justasymbol", "")
+        , ("with#stuff:inside", E.Symbol "" "with#stuff:inside", "")
+        , ("my-namespace/foo", E.Symbol "my-namespace" "foo", "")
+        , ("/", E.Symbol "" "/", "")
 
         , (":fred", E.Keyword "fred", "")
         , (":my/fred", E.Keyword "my/fred", "")
@@ -110,21 +110,21 @@ casesTagged = [ ("#myapp/Person {:first \"Fred\" :last \"Mertz\"}", E.Tagged sam
               , ("#{a b [1 2 3]}", E.NoTag sampleSet, "")
               ]
 
-sampleList = E.List [E.symbol "" "a", E.symbol "" "b", E.Integer 42]
+sampleList = E.List [E.Symbol "" "a", E.Symbol "" "b", E.Integer 42]
 
-sampleVec = E.makeVec [E.symbol "" "a", E.symbol "" "b", E.Integer 42]
+sampleVec = E.makeVec [E.Symbol "" "a", E.Symbol "" "b", E.Integer 42]
 
 sampleMap = E.makeMap [ (E.Keyword "a",                                     E.Integer 1)
                       , (E.String "foo",                                    E.Keyword "bar")
-                      , (E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3], E.symbol "" "four")
+                      , (E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3], E.Symbol "" "four")
                       ]
 
-sampleSet = E.makeSet [ E.symbol "" "a"
-                      , E.symbol "" "b"
+sampleSet = E.makeSet [ E.Symbol "" "a"
+                      , E.Symbol "" "b"
                       , E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3]
                       ]
 
-sampleDiscard = E.makeVec [E.symbol "" "a", E.symbol "" "b", E.Integer 42]
+sampleDiscard = E.makeVec [E.Symbol "" "a", E.Symbol "" "b", E.Integer 42]
 sampleComment = E.List [E.Integer 1, E.Integer 2, E.Integer 3, E.Integer 4]
 
 sampleTaggedMap = E.makeMap [ (E.Keyword "first", E.String "Fred")

@@ -11,7 +11,7 @@ data Value = Nil
            | Boolean Bool
            | String Text
            | Character Char
-           | Symbol Int
+           | Symbol ByteString ByteString
            | Keyword ByteString
            | Integer Integer
            | Floating Double
@@ -27,9 +27,6 @@ data TaggedValue = NoTag { val :: Value }
 wrapTagged :: Maybe (ByteString, ByteString) -> Value -> TaggedValue
 wrapTagged Nothing value              = NoTag value
 wrapTagged (Just (prefix, tag)) value = Tagged value prefix tag
-
-symbol :: ByteString -> ByteString -> Value
-symbol ns key = Symbol (H.hash ns `H.combine` H.hash key)
 
 makeVec :: [Value] -> Value
 makeVec = Vec . V.fromList

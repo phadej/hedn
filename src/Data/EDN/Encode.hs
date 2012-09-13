@@ -26,10 +26,10 @@ fromValue (E.String t) = fromText t
 
 fromValue (E.Character c) = singleton '\\' <> singleton c
 
--- FIXME: should be a literal symbol name
-fromValue (E.Symbol h) = decimal h
+fromValue (E.Symbol "" v) = string v
+fromValue (E.Symbol ns v) = string ns <> singleton '/' <> string v
 
-fromValue (E.Keyword kw) = singleton ':' <> (fromLazyText . decodeUtf8 . L.fromChunks $ [kw])
+fromValue (E.Keyword kw) = singleton ':' <> string kw
 
 fromValue (E.Integer i) = decimal i
 
@@ -49,6 +49,8 @@ fromValue (E.Set xs)
 fromValue (E.Map as)
     | M.null as = "{}"
     | otherwise = singleton '{' <> fromAssoc (M.assocs as) <> singleton '}'
+
+string s = fromLazyText . decodeUtf8 . L.fromChunks $ [s]
 
 fromList (x:[]) = fromValue x
 fromList (x:xs) = fromValue x <> singleton ' ' <> fromList xs

@@ -73,7 +73,7 @@ parseSymbol = do
     skipSoC
     c <- satisfy (inClass "a-zA-Z.*/!?+_-")
     (ns, val) <- withNS c <|> withoutNS c
-    return $! symbol ns val
+    return $! Symbol ns val
     where
         withNS c = do
             ns <- takeWhile (inClass "a-zA-Z0-9#:.*!?+_-")
