@@ -72,47 +72,47 @@ cases = [ ("nil", E.nil)
          -- ...and many other strange stuff...
 
         , ("(a b 42)", sampleList)
-        , ("()", E.NoTag $ E.makeList [])
+        , ("()", E.notag $ E.makeList [])
 
         , ("[a b 42]", sampleVec)
-        , ("[]", E.NoTag $ E.makeVec [])
+        , ("[]", E.notag $ E.makeVec [])
 
         , ("{:a 1, \"foo\" :bar, [1 2 3] four}", sampleMap)
-        , ("{}", E.NoTag $ E.makeMap [])
+        , ("{}", E.notag $ E.makeMap [])
 
         , ("#{a b [1 2 3]}", sampleSet)
-        , ("#{}", E.NoTag $ E.makeSet [])
+        , ("#{}", E.notag $ E.makeSet [])
 
         , ("[a b #_foo 42]", sampleDiscard)
         , ("(1 2 ;more to go!\n 3 4)", sampleComment)
 
         , ("#myapp/Person {:first \"Fred\" :last \"Mertz\"}", E.tag "myapp" "Person" sampleTaggedMap)
-        , ("{:first \"Fred\" :last \"Mertz\"}", E.NoTag sampleTaggedMap)
+        , ("{:first \"Fred\" :last \"Mertz\"}", E.notag sampleTaggedMap)
         ]
 
 sampleList :: E.TaggedValue
-sampleList = E.NoTag $ E.makeList [E.symbol "a", E.symbol "b", E.integer 42]
+sampleList = E.notag $ E.makeList [E.symbol "a", E.symbol "b", E.integer 42]
 
 sampleVec :: E.TaggedValue
-sampleVec = E.NoTag $ E.makeVec [E.symbol "a", E.symbol "b", E.integer 42]
+sampleVec = E.notag $ E.makeVec [E.symbol "a", E.symbol "b", E.integer 42]
 
 sampleMap :: E.TaggedValue
-sampleMap = E.NoTag $ E.makeMap [ (":a",                                              E.integer 1)
+sampleMap = E.notag $ E.makeMap [ (":a",                                              E.integer 1)
                                 , ("foo",                                             E.keyword "bar")
                                 , (E.makeVec [E.integer 1, E.integer 2, E.integer 3], E.symbol "four")
                                 ]
 
 sampleSet :: E.TaggedValue
-sampleSet = E.NoTag $ E.makeSet [ E.symbol "a"
+sampleSet = E.notag $ E.makeSet [ E.symbol "a"
                                 , E.symbol "b"
-                                , E.NoTag $ E.makeVec [E.integer 1, E.integer 2, E.integer 3]
+                                , E.notag $ E.makeVec [E.integer 1, E.integer 2, E.integer 3]
                                 ]
 
 sampleDiscard :: E.TaggedValue
-sampleDiscard = E.NoTag $ E.makeVec [E.symbol "a", E.symbol "b", E.integer 42]
+sampleDiscard = E.notag $ E.makeVec [E.symbol "a", E.symbol "b", E.integer 42]
 
 sampleComment :: E.TaggedValue
-sampleComment = E.NoTag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.integer 4]
+sampleComment = E.notag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.integer 4]
 
 sampleTaggedMap :: E.Value
 sampleTaggedMap = E.makeMap [ "first" ..= "Fred", "last" ..= "Mertz" ]
