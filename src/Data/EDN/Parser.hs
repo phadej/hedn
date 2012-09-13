@@ -20,7 +20,7 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TLE
 import Data.ByteString.Search (replace)
 
-import Data.EDN.Types (Value(..), TaggedValue(..), makeVec', makeMap', makeSet')
+import Data.EDN.Types (Value(..), TaggedValue(..), makeVec, makeMap, makeSet)
 
 isSpaceOrComma :: Char -> Bool
 isSpaceOrComma ' ' = True
@@ -123,7 +123,7 @@ parseVector = do
     char '['
     vs <- parseTagged `sepBy` spaceOrComma
     char ']'
-    return $! makeVec' vs
+    return $! makeVec vs
 
 parseMap :: Parser Value
 parseMap = do
@@ -131,7 +131,7 @@ parseMap = do
     char '{'
     pairs <- parseAssoc `sepBy` spaceOrComma
     char '}'
-    return $! makeMap' pairs
+    return $! makeMap pairs
     where
         parseAssoc = do
             key <- parseValue
@@ -145,7 +145,7 @@ parseSet = do
     char '{'
     vs <- parseTagged `sepBy` spaceOrComma
     char '}'
-    return $! makeSet' vs
+    return $! makeSet vs
 
 skipComment :: Parser ()
 skipComment = skipSoC >> char ';' >> skipWhile (/= '\n')

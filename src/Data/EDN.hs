@@ -2,8 +2,21 @@ module Data.EDN (
     -- * Core EDN types
     Value(..), TaggedValue(..),
 
+    -- * Tag manipulation
+    setTag, getTag, stripTag,
+
     -- * Constructors
-    makeVec, makeSet, makeMap,
+    tag, notag,
+
+    -- ** Basic values
+    nil,
+    bool, true, false,
+    char, string,
+    symbol, symbolNS, keyword,
+    integer, floating,
+
+    -- ** Containers
+    makeList, makeVec, makeSet, makeMap,
 
     -- * Encoding
     encode, fromValue, fromTagged,
@@ -12,6 +25,6 @@ module Data.EDN (
     decode, parseValue, parseTagged
 ) where
 
-import Data.EDN.Types (Value(..), TaggedValue(..), makeVec, makeSet, makeMap)
+import Data.EDN.Types
 import Data.EDN.Encode (encode, fromValue, fromTagged)
 import Data.EDN.Parser (decode, parseValue, parseTagged)

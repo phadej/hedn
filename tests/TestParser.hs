@@ -40,86 +40,81 @@ checkCase runner checker (input, output) = do
     putStrLn ""
 
 cases :: [(BSL.ByteString, E.TaggedValue)]
-cases = map (\(i, o) -> (i, E.NoTag o)) noTags ++ haveTags
+cases = [ ("nil", E.nil)
 
-noTags :: [(BSL.ByteString, E.Value)]
-noTags = [ ("nil", Nil)
+        , ("true", E.true)
+        , ("false", E.false)
 
-         , ("true", E.Boolean True)
-         , ("false", E.Boolean False)
+        , ("\"a nice string\"", E.string "a nice string")
+        , ("\"split\\second \\t\\rai\\n\"", E.string "split\\second \t\rai\n")
+        , ("\"test \\\"sausage\\\" shmest\"", E.string "test \"sausage\" shmest")
+        , ("\"\"", E.string "")
 
-         , ("\"a nice string\"", E.String "a nice string")
-         , ("\"split\\second \\t\\rai\\n\"", E.String "split\\second \t\rai\n")
-         , ("\"test \\\"sausage\\\" shmest\"", E.String "test \"sausage\" shmest")
-         , ("\"\"", E.String "")
+        , ("\\c", E.char 'c')
+        , ("\\\\", E.char '\\')
+        , ("\\newline", E.char '\n')
+        , ("\\space", E.char ' ')
+        , ("\\tab", E.char '\t')
 
-         , ("\\c", E.Character 'c')
-         , ("\\\\", E.Character '\\')
-         , ("\\newline", E.Character '\n')
-         , ("\\space", E.Character ' ')
-         , ("\\tab", E.Character '\t')
+        , ("justasymbol", E.symbol "justasymbol")
+        , ("with#stuff:inside", E.symbol "with#stuff:inside")
+        , ("my-namespace/foo", E.symbolNS "my-namespace" "foo")
+        , ("/", E.symbol "/")
 
-         , ("justasymbol", E.Symbol "" "justasymbol")
-         , ("with#stuff:inside", E.Symbol "" "with#stuff:inside")
-         , ("my-namespace/foo", E.Symbol "my-namespace" "foo")
-         , ("/", E.Symbol "" "/")
+        , (":fred", E.keyword "fred")
+        , (":my/fred", E.keyword "my/fred")
 
-         , (":fred", E.Keyword "fred")
-         , (":my/fred", E.Keyword "my/fred")
+        , ("42", E.integer 42)
+        , ("-1", E.integer (-1))
 
-         , ("42", E.Integer 42)
-         , ("-1", E.Integer (-1))
-
-         , ("100.50", E.Floating 100.5)
-         , ("-3.14", E.Floating (-3.14))
+        , ("100.50", E.floating 100.5)
+        , ("-3.14", E.floating (-3.14))
          -- ...and many other strange stuff...
 
-         , ("(a b 42)", sampleList)
-         , ("()", E.List [])
+        , ("(a b 42)", sampleList)
+        , ("()", E.NoTag $ E.makeList [])
 
-         , ("[a b 42]", sampleVec)
-         , ("[]", E.makeVec [])
+        , ("[a b 42]", sampleVec)
+        , ("[]", E.NoTag $ E.makeVec [])
 
-         , ("{:a 1 \"foo\" :bar [1 2 3] four}", sampleMap)
-         , ("{}", E.makeMap [])
+        , ("{:a 1 \"foo\" :bar [1 2 3] four}", sampleMap)
+        , ("{}", E.NoTag $ E.makeMap [])
 
-         , ("#{a b [1 2 3]}", sampleSet)
-         , ("#{}", E.makeSet [])
+        , ("#{a b [1 2 3]}", sampleSet)
+        , ("#{}", E.NoTag $ E.makeSet [])
 
-         , ("[a b #_foo 42]", sampleDiscard)
-         , ("(1 2 ;more to go!\n 3 4)", sampleComment)
-         ]
+        , ("[a b #_foo 42]", sampleDiscard)
+        , ("(1 2 ;more to go!\n 3 4)", sampleComment)
 
-haveTags :: [(BSL.ByteString, E.TaggedValue)]
-haveTags = [ ("#myapp/Person {:first \"Fred\" :last \"Mertz\"}", E.Tagged sampleTaggedMap "myapp" "Person")
-           , ("{:first \"Fred\" :last \"Mertz\"}", E.NoTag sampleTaggedMap)
-           ]
+        , ("#myapp/Person {:first \"Fred\" :last \"Mertz\"}", E.tag "myapp" "Person" sampleTaggedMap)
+        , ("{:first \"Fred\" :last \"Mertz\"}", E.NoTag sampleTaggedMap)
+        ]
 
-sampleList :: E.Value
-sampleList = E.makeList [E.Symbol "" "a", E.Symbol "" "b", E.Integer 42]
+sampleList :: E.TaggedValue
+sampleList = E.NoTag $ E.makeList [E.symbol "a", E.symbol "b", E.integer 42]
 
-sampleVec :: E.Value
-sampleVec = E.makeVec [E.Symbol "" "a", E.Symbol "" "b", E.Integer 42]
+sampleVec :: E.TaggedValue
+sampleVec = E.NoTag $ E.makeVec [E.symbol "a", E.symbol "b", E.integer 42]
 
-sampleMap :: E.Value
-sampleMap = E.makeMap [ (E.Keyword "a",                                     E.Integer 1)
-                      , (E.String "foo",                                    E.Keyword "bar")
-                      , (E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3], E.Symbol "" "four")
-                      ]
+sampleMap :: E.TaggedValue
+sampleMap = E.NoTag $ E.makeMap [ (E.Keyword "a",                                     E.integer 1)
+                                , (E.String "foo",                                    E.keyword "bar")
+                                , (E.makeVec [E.integer 1, E.integer 2, E.integer 3], E.symbol "four")
+                                ]
 
-sampleSet :: E.Value
-sampleSet = E.makeSet [ E.Symbol "" "a"
-                      , E.Symbol "" "b"
-                      , E.makeVec [E.Integer 1, E.Integer 2, E.Integer 3]
-                      ]
+sampleSet :: E.TaggedValue
+sampleSet = E.NoTag $ E.makeSet [ E.symbol "a"
+                                , E.symbol "b"
+                                , E.NoTag $ E.makeVec [E.integer 1, E.integer 2, E.integer 3]
+                                ]
 
-sampleDiscard :: E.Value
-sampleDiscard = E.makeVec [E.Symbol "" "a", E.Symbol "" "b", E.Integer 42]
+sampleDiscard :: E.TaggedValue
+sampleDiscard = E.NoTag $ E.makeVec [E.symbol "a", E.symbol "b", E.integer 42]
 
-sampleComment :: E.Value
-sampleComment = E.makeList [E.Integer 1, E.Integer 2, E.Integer 3, E.Integer 4]
+sampleComment :: E.TaggedValue
+sampleComment = E.NoTag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.integer 4]
 
 sampleTaggedMap :: E.Value
-sampleTaggedMap = E.makeMap [ (E.Keyword "first", E.String "Fred")
-                            , (E.Keyword "last", E.String "Mertz")
+sampleTaggedMap = E.makeMap [ (E.Keyword "first", E.string "Fred")
+                            , (E.Keyword "last", E.string "Mertz")
                             ]
