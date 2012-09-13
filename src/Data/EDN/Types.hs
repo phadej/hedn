@@ -1,12 +1,20 @@
-module Data.EDN.Types where
+module Data.EDN.Types (
+    -- * Types
+    Value(..),
+    TaggedValue(..),
+    -- * Constructors
+    makeVec,
+    makeSet,
+    makeMap
+) where
 
 import Data.Text (Text)
 import Data.ByteString.Char8 (ByteString)
-import qualified Data.Hashable as H
 import qualified Data.Vector as V
 import qualified Data.Map as M
 import qualified Data.Set as S
 
+-- | A \"raw\" EDN value represented as a Haskell value.
 data Value = Nil
            | Boolean Bool
            | String Text
@@ -21,18 +29,22 @@ data Value = Nil
            | Set (S.Set Value)
            deriving (Eq, Ord, Show)
 
-data TaggedValue = NoTag { val :: Value }
-                 | Tagged { val :: Value, prefix :: ByteString, tag :: ByteString } deriving (Eq, Show)
+-- | A 'Value' wrapped into a namespaced tag.
+data TaggedValue = NoTag Value
+                 | Tagged Value ByteString ByteString
+                 deriving (Eq, Show)
 
-wrapTagged :: Maybe (ByteString, ByteString) -> Value -> TaggedValue
-wrapTagged Nothing value              = NoTag value
-wrapTagged (Just (prefix, tag)) value = Tagged value prefix tag
-
+-- | Create an EDN Vector from a 'Value' list.
 makeVec :: [Value] -> Value
 makeVec = Vec . V.fromList
+{-# INLINE makeVec #-}
 
+-- | Create an EDN Set from a 'Value' list.
 makeSet :: [Value] -> Value
 makeSet = Set . S.fromList
+{-# INLINE makeSet #-}
 
+-- | Create an EDN Map from a 'Value' list.
 makeMap :: [(Value, Value)] -> Value
 makeMap = Map . M.fromList
+{-# INLINE makeMap #-}

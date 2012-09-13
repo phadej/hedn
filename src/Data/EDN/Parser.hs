@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.EDN.Parser where
+module Data.EDN.Parser (parseValue, parseTagged) where
 
 import Prelude hiding (String, takeWhile, dropWhile)
 import Data.Attoparsec.Char8 as A
-import Data.Attoparsec.Combinator
+import Data.Attoparsec.Combinator()
 import Control.Applicative (pure, (<|>), (*>))
 import Data.Text.Encoding (decodeUtf8)
 import qualified Data.ByteString.Char8 as BS
@@ -148,6 +148,7 @@ parseDiscard = do
     parseValue
     return ()
 
+-- | Parse a \"raw\" EDN value into a 'Value'.
 parseValue :: Parser Value
 parseValue = do
     skipSoC
@@ -162,6 +163,7 @@ parseValue = do
              <|> parseCharacter
              <|> parseString
 
+-- | Parse a probably tagged EDN value into a 'TaggedValue'.
 parseTagged :: Parser TaggedValue
 parseTagged = do
     skipSoC
