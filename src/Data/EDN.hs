@@ -5,11 +5,13 @@ module Data.EDN (
     -- * Constructors
     makeVec, makeSet, makeMap,
 
-    -- * Encoding and parsing
+    -- * Encoding
     encode, fromValue, fromTagged,
-    parseValue, parseTagged
+
+    -- * Parsing
+    decode, parseValue, parseTagged
 ) where
 
 import Data.EDN.Types (Value(..), TaggedValue(..), makeVec, makeSet, makeMap)
-import Data.EDN.Parser (parseValue, parseTagged)
 import Data.EDN.Encode (encode, fromValue, fromTagged)
+import Data.EDN.Parser (decode, parseValue, parseTagged)

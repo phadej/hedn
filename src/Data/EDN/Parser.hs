@@ -2,7 +2,7 @@
 
 module Data.EDN.Parser (
     -- * Data parsers
-    parseBSL, parseBS, parseT, parseTL, parseS,
+    decode, parseBSL, parseBS, parseT, parseTL, parseS,
     -- * Attoparsec implementation
     parseValue, parseTagged
 ) where
@@ -196,24 +196,34 @@ parseTagged = do
             value <- parseValue
             return $! NoTag value
 
+-- | Decode a lazy 'BSL.ByteString' into a 'TaggedValue'. If fails due to incomplete or invalid input, 'Nothing' is returned.
+decode :: BSL.ByteString -> Maybe TaggedValue
+decode src = case parseBSL src of
+    AL.Done _ r -> Just r
+    _           -> Nothing
+
 -- | Parse a lazy 'BSL.ByteString'.
 parseBSL :: BSL.ByteString -> AL.Result TaggedValue
 parseBSL = AL.parse parseTagged
 {-# INLINE parseBSL #-}
 
--- | Parse a strict 'BS.ByteString', but without continuing.
+-- | Parse a strict 'BS.ByteString', but without continutations.
 parseBS :: BS.ByteString -> AL.Result TaggedValue
 parseBS s = parseBSL . BSL.fromChunks $ [s]
 {-# INLINE parseBS #-}
 
-parseT :: T.Text -> AL.Result TaggedValue
-parseT = parseBS . TE.encodeUtf8
-{-# INLINE parseT #-}
-
+-- | Parse a lazy 'TL.Text'.
 parseTL :: TL.Text -> AL.Result TaggedValue
 parseTL = parseBSL . TLE.encodeUtf8
 {-# INLINE parseTL #-}
 
+-- | Parse a strict 'T.Text'.
+parseT :: T.Text -> AL.Result TaggedValue
+parseT = parseBS . TE.encodeUtf8
+{-# INLINE parseT #-}
+
+-- | Parse a string AKA '[Char]'. Not really useful other than for debugging purposes.
 parseS :: [Char] -> AL.Result TaggedValue
 parseS = parseBSL . BSL.pack
 {-# INLINE parseS #-}
+
