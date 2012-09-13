@@ -3,6 +3,7 @@
 module Data.EDN.Encode where
 
 import Data.Monoid (mappend)
+import qualified Data.Text as T
 import Data.Text.Lazy.Builder
 import Data.Text.Lazy.Builder.Int (decimal)
 import Data.Text.Lazy.Builder.RealFloat (realFloat)
@@ -21,8 +22,7 @@ fromValue E.Nil = "nil"
 
 fromValue (E.Boolean b) = if b then "true" else "false"
 
--- FIXME: escape \t \r \\
-fromValue (E.String t) = fromText t
+fromValue (E.String t) = singleton '"' <> quote t <> singleton '"'
 
 fromValue (E.Character c) = singleton '\\' <> singleton c
 
@@ -51,6 +51,19 @@ fromValue (E.Map as)
     | otherwise = singleton '{' <> fromAssoc (M.assocs as) <> singleton '}'
 
 string s = fromLazyText . decodeUtf8 . L.fromChunks $ [s]
+
+quote q = case T.uncons t of
+    Nothing -> fromText h
+    Just (c, t') -> fromText h <> escape c <> quote t'
+    where
+        (h, t) = T.break isEscape q
+        isEscape c = c == '\"' || c == '\\' || c < '\x20'
+        escape '\"' = "\\\""
+        escape '\\' = "\\\\"
+        escape '\n' = "\\n"
+        escape '\r' = "\\r"
+        escape '\t' = "\\t"
+        escape c = singleton c
 
 fromList (x:[]) = fromValue x
 fromList (x:xs) = fromValue x <> singleton ' ' <> fromList xs
