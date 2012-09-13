@@ -68,15 +68,15 @@ quote q = case T.uncons t of
         escape '\t' = "\\t"
         escape c = singleton c
 
-fromList :: [E.Value] -> Builder
+fromList :: [E.TaggedValue] -> Builder
 fromList [] = ""
-fromList (x:[]) = fromValue x
-fromList (x:xs) = fromValue x <> singleton ' ' <> fromList xs
+fromList (x:[]) = fromTagged x
+fromList (x:xs) = fromTagged x <> singleton ' ' <> fromList xs
 
-fromAssoc :: [(E.Value, E.Value)] -> Builder
+fromAssoc :: [(E.Value, E.TaggedValue)] -> Builder
 fromAssoc [] = ""
-fromAssoc ((k, v):[]) = fromValue k <> singleton ' ' <> fromValue v
-fromAssoc ((k, v):as) = fromValue k <> singleton ' ' <> fromValue v <> singleton ' ' <> fromAssoc as
+fromAssoc ((k, v):[]) = fromValue k <> singleton ' ' <> fromTagged v
+fromAssoc ((k, v):as) = fromValue k <> singleton ' ' <> fromTagged v <> singleton ' ' <> fromAssoc as
 
 -- | Serialize a EDN value as a lazy 'L.ByteString'.
 encode :: E.TaggedValue -> L.ByteString

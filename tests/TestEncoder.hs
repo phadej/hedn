@@ -3,7 +3,7 @@
 module Main where
 
 import Data.EDN.Types as E
-import Data.EDN.Encode (fromValue)
+import Data.EDN.Encode (encode)
 
 main = do
-    print . fromValue $ E.List [E.Keyword "a", E.Keyword "b", E.Integer 42]
+    print . encode . E.NoTag . E.List $ map E.NoTag [E.Keyword "a", E.Keyword "b", E.Integer 42]

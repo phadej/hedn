@@ -1,11 +1,15 @@
 module Data.EDN.Types (
     -- * Types
-    Value(..),
-    TaggedValue(..),
+
+    TaggedValue(..), Value(..),
+
     -- * Constructors
-    makeVec,
-    makeSet,
-    makeMap
+
+    -- ** Empty-tagged containers
+    makeList, makeVec, makeSet, makeMap,
+
+    -- ** Tagged containers
+    makeVec', makeSet', makeMap'
 ) where
 
 import Data.Text (Text)
@@ -23,28 +27,48 @@ data Value = Nil
            | Keyword ByteString
            | Integer Integer
            | Floating Double
-           | List [Value]
-           | Vec (V.Vector Value)
-           | Map (M.Map Value Value)
-           | Set (S.Set Value)
+           | List [TaggedValue]
+           | Vec (V.Vector TaggedValue)
+           | Map (M.Map Value TaggedValue)
+           | Set (S.Set TaggedValue)
            deriving (Eq, Ord, Show)
 
 -- | A 'Value' wrapped into a namespaced tag.
 data TaggedValue = NoTag Value
                  | Tagged Value ByteString ByteString
-                 deriving (Eq, Show)
+                 deriving (Eq, Ord, Show)
 
--- | Create an EDN Vector from a 'Value' list.
+-- | Create an EDN 'List' from a 'Value' list wrapping them into empty tags.
+makeList :: [Value] -> Value
+makeList = List . map NoTag
+{-# INLINE makeList #-}
+
+-- | Create an EDN 'Vector' from a 'TaggedValue' list.
+makeVec' :: [TaggedValue] -> Value
+makeVec' = Vec . V.fromList
+{-# INLINE makeVec' #-}
+
+-- | Create an EDN 'Vector' from a 'Value' list wrapping them into empty tags.
 makeVec :: [Value] -> Value
-makeVec = Vec . V.fromList
+makeVec = makeVec' . map NoTag
 {-# INLINE makeVec #-}
 
--- | Create an EDN Set from a 'Value' list.
+-- | Create an EDN 'Set' from a 'TaggedValue' list.
+makeSet' :: [TaggedValue] -> Value
+makeSet' = Set . S.fromList
+{-# INLINE makeSet' #-}
+
+-- | Create an EDN 'Set' from a 'Value' list wrapping them into empty tags.
 makeSet :: [Value] -> Value
-makeSet = Set . S.fromList
+makeSet = makeSet' . map NoTag
 {-# INLINE makeSet #-}
 
--- | Create an EDN Map from a 'Value' list.
+-- | Create an EDN 'Map' from a assoc list with untagged keys and tagged values.
+makeMap' :: [(Value, TaggedValue)] -> Value
+makeMap' = Map . M.fromList
+{-# INLINE makeMap' #-}
+
+-- | Create an EDN 'Map' from a assoc list with untagged keys and values, wrapping values into empty tags.
 makeMap :: [(Value, Value)] -> Value
-makeMap = Map . M.fromList
+makeMap as = makeMap' [(k, NoTag v) | (k, v) <- as]
 {-# INLINE makeMap #-}

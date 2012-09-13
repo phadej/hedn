@@ -1,14 +1,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Data.EDN.Parser (parseValue, parseTagged) where
+module Data.EDN.Parser (
+    -- * Data parsers
+    parseBSL, parseBS, parseT, parseTL, parseS,
+    -- * Attoparsec implementation
+    parseValue, parseTagged
+) where
 
-import Prelude hiding (String, takeWhile, dropWhile)
+import Prelude hiding (String, takeWhile)
 import Data.Attoparsec.Char8 as A
+import qualified Data.Attoparsec.Lazy as AL
 import Data.Attoparsec.Combinator()
 import Control.Applicative (pure, (<|>), (*>))
-import Data.Text.Encoding (decodeUtf8)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Lazy.Encoding as TLE
 import Data.ByteString.Search (replace)
 
 import Data.EDN.Types
@@ -30,7 +39,7 @@ skipSoC = skipWhile isSpaceOrComma
 parseNil :: Parser Value
 parseNil = do
     skipSoC
-    A.string "nil"
+    string "nil"
     return Nil
 
 parseBool :: Parser Value
@@ -52,8 +61,8 @@ parseString = do
     char '"'
 
     if '\\' `BS.elem` x
-        then return $! String . decodeUtf8 . rep "\\\"" "\"". rep "\\\\" "\\" . rep "\\n" "\n" . rep "\\r" "\r" . rep "\\t" "\t" $ x
-        else return $! String . decodeUtf8 $ x
+        then return $! String . TE.decodeUtf8 . rep "\\\"" "\"". rep "\\\\" "\\" . rep "\\n" "\n" . rep "\\r" "\r" . rep "\\t" "\t" $ x
+        else return $! String . TE.decodeUtf8 $ x
 
     where rep f t s = BS.concat . BSL.toChunks $! replace (BS.pack f) (BS.pack t) s
 
@@ -76,9 +85,9 @@ parseSymbol = do
     return $! Symbol ns val
     where
         withNS c = do
-            ns <- takeWhile (inClass "a-zA-Z0-9#:.*!?+_-")
+            ns <- takeWhile1 (inClass "a-zA-Z0-9#:.*!?+_-")
             char '/'
-            val <- takeWhile (inClass "a-zA-Z0-9#:.*!?+_-")
+            val <- takeWhile1 (inClass "a-zA-Z0-9#:.*!?+_-")
             return (c `BS.cons` ns, val)
 
         withoutNS c = do
@@ -89,7 +98,7 @@ parseKeyword :: Parser Value
 parseKeyword = do
     skipSoC
     char ':'
-    x <- takeWhile (inClass "a-zA-Z0-9.*/!?+_-")
+    x <- takeWhile1 (inClass "a-zA-Z0-9.*/!?+_-")
     return $! Keyword x
 
 parseNumber :: Parser Value
@@ -104,7 +113,7 @@ parseList :: Parser Value
 parseList = do
     skipSoC
     char '('
-    vs <- parseValue `sepBy` spaceOrComma
+    vs <- parseTagged `sepBy` spaceOrComma
     char ')'
     return $! List vs
 
@@ -112,9 +121,9 @@ parseVector :: Parser Value
 parseVector = do
     skipSoC
     char '['
-    vs <- parseValue `sepBy` spaceOrComma
+    vs <- parseTagged `sepBy` spaceOrComma
     char ']'
-    return $! makeVec vs
+    return $! makeVec' vs
 
 parseMap :: Parser Value
 parseMap = do
@@ -122,11 +131,11 @@ parseMap = do
     char '{'
     pairs <- parseAssoc `sepBy` spaceOrComma
     char '}'
-    return $! makeMap pairs
+    return $! makeMap' pairs
     where
         parseAssoc = do
             key <- parseValue
-            val <- parseValue
+            val <- parseTagged
             return (key, val)
 
 parseSet :: Parser Value
@@ -134,9 +143,9 @@ parseSet = do
     skipSoC
     char '#'
     char '{'
-    vs <- parseValue `sepBy` spaceOrComma
+    vs <- parseTagged `sepBy` spaceOrComma
     char '}'
-    return $! makeSet vs
+    return $! makeSet' vs
 
 skipComment :: Parser ()
 skipComment = skipSoC >> char ';' >> skipWhile (/= '\n')
@@ -171,18 +180,40 @@ parseTagged = do
     where
         withNS = do
             char '#'
-            ns <- takeWhile (inClass "a-zA-Z0-9-")
+            ns <- takeWhile1 (inClass "a-zA-Z0-9-")
             char '/'
-            tag <- takeWhile (inClass "a-zA-Z0-9-")
+            tag <- takeWhile1 (inClass "a-zA-Z0-9-")
             value <- parseValue
             return $! Tagged value ns tag
 
         withoutNS = do
             char '#'
-            tag <- takeWhile (inClass "a-zA-Z0-9-")
+            tag <- takeWhile1 (inClass "a-zA-Z0-9-")
             value <- parseValue
             return $! Tagged value "" tag
 
         noTag = do
             value <- parseValue
             return $! NoTag value
+
+-- | Parse a lazy 'BSL.ByteString'.
+parseBSL :: BSL.ByteString -> AL.Result TaggedValue
+parseBSL = AL.parse parseTagged
+{-# INLINE parseBSL #-}
+
+-- | Parse a strict 'BS.ByteString', but without continuing.
+parseBS :: BS.ByteString -> AL.Result TaggedValue
+parseBS s = parseBSL . BSL.fromChunks $ [s]
+{-# INLINE parseBS #-}
+
+parseT :: T.Text -> AL.Result TaggedValue
+parseT = parseBS . TE.encodeUtf8
+{-# INLINE parseT #-}
+
+parseTL :: TL.Text -> AL.Result TaggedValue
+parseTL = parseBSL . TLE.encodeUtf8
+{-# INLINE parseTL #-}
+
+parseS :: [Char] -> AL.Result TaggedValue
+parseS = parseBSL . BSL.pack
+{-# INLINE parseS #-}
