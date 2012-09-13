@@ -45,10 +45,10 @@ cases = [ ("nil", E.nil)
         , ("true", E.true)
         , ("false", E.false)
 
-        , ("\"a nice string\"", E.string "a nice string")
-        , ("\"split\\second \\t\\rai\\n\"", E.string "split\\second \t\rai\n")
-        , ("\"test \\\"sausage\\\" shmest\"", E.string "test \"sausage\" shmest")
-        , ("\"\"", E.string "")
+        , ("\"a nice string\"", "a nice string")
+        , ("\"split\\second \\t\\rai\\n\"", "split\\second \t\rai\n")
+        , ("\"test \\\"sausage\\\" shmest\"", "test \"sausage\" shmest")
+        , ("\"\"", "")
 
         , ("\\c", E.char 'c')
         , ("\\\\", E.char '\\')
@@ -98,7 +98,7 @@ sampleVec = E.NoTag $ E.makeVec [E.symbol "a", E.symbol "b", E.integer 42]
 
 sampleMap :: E.TaggedValue
 sampleMap = E.NoTag $ E.makeMap [ (E.Keyword "a",                                     E.integer 1)
-                                , (E.String "foo",                                    E.keyword "bar")
+                                , ("foo",                                             E.keyword "bar")
                                 , (E.makeVec [E.integer 1, E.integer 2, E.integer 3], E.symbol "four")
                                 ]
 
@@ -115,6 +115,6 @@ sampleComment :: E.TaggedValue
 sampleComment = E.NoTag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.integer 4]
 
 sampleTaggedMap :: E.Value
-sampleTaggedMap = E.makeMap [ (E.Keyword "first", E.string "Fred")
-                            , (E.Keyword "last", E.string "Mertz")
+sampleTaggedMap = E.makeMap [ (E.Keyword "first", "Fred")
+                            , (E.Keyword "last", "Mertz")
                             ]

@@ -20,7 +20,9 @@ module Data.EDN.Types (
     makeList, makeVec, makeSet, makeMap
 ) where
 
+import Data.String (IsString(..))
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.Vector as V
@@ -51,6 +53,14 @@ data Value = Nil
 data TaggedValue = NoTag !Value
                  | Tagged !Value !ByteString !ByteString
                  deriving (Eq, Ord, Show)
+
+instance IsString Value where
+  fromString = String . T.pack
+  {-# INLINE fromString #-}
+
+instance IsString TaggedValue where
+  fromString = string . T.pack
+  {-# INLINE fromString #-}
 
 -- | Basic EDN nil.
 nil :: TaggedValue
