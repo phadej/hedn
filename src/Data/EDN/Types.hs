@@ -27,24 +27,29 @@ import qualified Data.Vector as V
 import qualified Data.Map as M
 import qualified Data.Set as S
 
+type EDNList = [TaggedValue]
+type EDNVec = V.Vector TaggedValue
+type EDNMap = M.Map Value TaggedValue
+type EDNSet = S.Set TaggedValue
+
 -- | A \"raw\" EDN value represented as a Haskell value.
 data Value = Nil
-           | Boolean Bool
-           | String Text
-           | Character Char
-           | Symbol ByteString ByteString
-           | Keyword ByteString
-           | Integer Integer
-           | Floating Double
-           | List [TaggedValue]
-           | Vec (V.Vector TaggedValue)
-           | Map (M.Map Value TaggedValue)
-           | Set (S.Set TaggedValue)
+           | Boolean !Bool
+           | String !Text
+           | Character !Char
+           | Symbol !ByteString !ByteString
+           | Keyword !ByteString
+           | Integer !Integer
+           | Floating !Double
+           | List EDNList
+           | Vec !EDNVec
+           | Map !EDNMap
+           | Set !EDNSet
            deriving (Eq, Ord, Show)
 
 -- | A 'Value' wrapped into a namespaced tag.
-data TaggedValue = NoTag Value
-                 | Tagged Value ByteString ByteString
+data TaggedValue = NoTag !Value
+                 | Tagged !Value !ByteString !ByteString
                  deriving (Eq, Ord, Show)
 
 -- | Basic EDN nil.
