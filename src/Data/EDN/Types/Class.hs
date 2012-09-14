@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
 
-module Data.EDN.Types.Class where
+module Data.EDN.Types.Class (
+    ToEDN, FromEDN, toEDN, fromEDN, fromEDNv
+) where
 
 import Control.Applicative (pure, (<$>))
 import qualified Data.Text as T
@@ -13,7 +15,7 @@ import qualified Data.Vector as V
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import Data.Parser as P
+import qualified Data.Parser as P
 import qualified Data.EDN.Types as E
 
 class ToEDN a where
@@ -196,6 +198,16 @@ instance ToEDN E.TaggedValue where
 
 instance FromEDN E.TaggedValue where
     parseEDN = pure
+
+-- | Convert a value from 'E.TaggedValue', failing if the types do not match.
+fromEDN :: FromEDN a => E.TaggedValue -> P.Result a
+fromEDN = P.parse parseEDN
+{-# INLINE fromEDN #-}
+
+-- | Convert a value from 'E.Value', failing if the types do not match.
+fromEDNv :: FromEDN a => E.Value -> P.Result a
+fromEDNv = P.parse parseEDNv
+{-# INLINE fromEDNv #-}
 
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
