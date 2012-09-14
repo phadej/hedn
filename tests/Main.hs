@@ -11,11 +11,21 @@ import qualified Data.ByteString.Lazy.Char8 as BSL
 import Data.EDN.Parser as P
 import Data.EDN.Types as E
 
-basicCase :: (BSL.ByteString, E.TaggedValue) -> Test
-basicCase (i, o) = TestCase (assertEqual (BSL.unpack i) (Just o) (P.decode i))
+main :: IO ()
+main = do
+    (Counts _ _ e f) <- runTestTT tests
+    when (e > 0 || f > 0) $ exitFailure
+
+tests :: Test
+tests = TestList [ TestLabel "BSL -> TV decoder" testBasic
+                 , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (P.decode "№")))
+                 ]
 
 testBasic :: Test
-testBasic = TestList $ map basicCase decodeCases
+testBasic = TestList $ map makeDecodeCase decodeCases
+
+makeDecodeCase :: (BSL.ByteString, E.TaggedValue) -> Test
+makeDecodeCase (i, o) = TestCase (assertEqual (BSL.unpack i) (Just o) (P.decode i))
 
 decodeCases :: [(BSL.ByteString, E.TaggedValue)]
 decodeCases = [ ("nil", E.nil)
@@ -94,14 +104,3 @@ sampleComment = E.notag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.i
 
 sampleTaggedMap :: E.Value
 sampleTaggedMap = E.makeMap [ "first" ..= "Fred", "last" ..= "Mertz" ]
-
-------------------------------------------------------------------------------
-
-tests :: Test
-tests = TestList [ TestLabel "Basic types" testBasic
-                 ]
-
-main :: IO ()
-main = do
-    (Counts _ _ e f) <- runTestTT tests
-    when (e > 0 || f > 0) $ exitFailure
