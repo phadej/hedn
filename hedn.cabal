@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                hedn
-version:             0.1.5.0
+version:             0.1.5.1
 synopsis:            EDN parsing and encoding
 homepage:            https://bitbucket.org/dpwiz/hedn
 license:             BSD3
@@ -20,7 +20,6 @@ description:
 
 extra-source-files:
   tests/TestParser.hs
-  tests/TestEncoder.hs
 
 flag developer
   description: operate in developer mode
@@ -39,18 +38,12 @@ library
   ghc-options: -O2 -Wall -fno-warn-unused-do-bind
 
 
-Test-Suite test-parser
+Test-Suite tests
   type:              exitcode-stdio-1.0
-  main-is:           TestParser.hs
+  main-is:           Main.hs
   hs-source-dirs:    tests/
-  build-depends:     base, hedn, attoparsec, bytestring, ansi-terminal
+  build-depends:     base, hedn, HUnit, bytestring
   ghc-options:       -Wall
-
-Test-Suite test-encoder
-  type:              exitcode-stdio-1.0
-  main-is:           TestEncoder.hs
-  hs-source-dirs:    tests/
-  build-depends:     base, hedn, attoparsec, bytestring, ansi-terminal
 
 source-repository head
   type:     mercurial
