@@ -4,6 +4,7 @@ module Data.EDN.Types.Class where
 
 import Control.Applicative (pure, (<$>))
 import qualified Data.Text as T
+import qualified Data.ByteString.Char8 as BS
 
 import Data.Parser as P
 import qualified Data.EDN.Types as E
@@ -72,7 +73,10 @@ instance ToEDN [Char] where
 
 instance FromEDN [Char] where
     parseEDNv (E.String t) = pure $ T.unpack t
-    parseEDNv v = typeMismatch "String" v
+    parseEDNv (E.Symbol "" s) = pure $ BS.unpack s
+    parseEDNv (E.Symbol ns s) = pure . BS.unpack $ BS.concat [ns, "/", s]
+    parseEDNv (E.Keyword k) = pure . BS.unpack $ BS.cons ':' k
+    parseEDNv v = typeMismatch "String/Symbol/Keyword" v
     {-# INLINE parseEDNv #-}
 
 instance ToEDN Char where
