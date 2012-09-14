@@ -1,8 +1,9 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
 
 module Data.EDN.Types.Class where
 
 import Control.Applicative (pure, (<$>))
+import qualified Data.Text as T
 
 import Data.Parser as P
 import qualified Data.EDN.Types as E
@@ -63,6 +64,24 @@ instance ToEDN () where
 instance FromEDN () where
     parseEDNv (E.List l) | null l = pure ()
     parseEDNv v = typeMismatch "()" v
+
+instance ToEDN [Char] where
+    toEDNv = E.String . T.pack
+    {-# INLINE toEDNv #-}
+
+instance FromEDN [Char] where
+    parseEDNv (E.String t) = pure $ T.unpack t
+    parseEDNv v = typeMismatch "String" v
+    {-# INLINE parseEDNv #-}
+
+instance ToEDN Char where
+    toEDNv = E.Character
+    {-# INLINE toEDNv #-}
+
+instance FromEDN Char where
+    parseEDNv (E.Character c) = pure $ c
+    parseEDNv v = typeMismatch "Character" v
+    {-# INLINE parseEDNv #-}
 
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
