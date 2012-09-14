@@ -4,7 +4,11 @@ module Data.EDN.Types.Class where
 
 import Control.Applicative (pure, (<$>))
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text.Encoding as TE
+import qualified Data.Text.Lazy.Encoding as TLE
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as BSL
 
 import Data.Parser as P
 import qualified Data.EDN.Types as E
@@ -77,6 +81,42 @@ instance FromEDN [Char] where
     parseEDNv (E.Symbol ns s) = pure . BS.unpack $ BS.concat [ns, "/", s]
     parseEDNv (E.Keyword k) = pure . BS.unpack $ BS.cons ':' k
     parseEDNv v = typeMismatch "String/Symbol/Keyword" v
+    {-# INLINE parseEDNv #-}
+
+instance ToEDN T.Text where
+    toEDNv = E.String
+    {-# INLINE toEDNv #-}
+
+instance FromEDN T.Text where
+    parseEDNv (E.String t) = pure t
+    parseEDNv v = typeMismatch "String" v
+    {-# INLINE parseEDNv #-}
+
+instance ToEDN TL.Text where
+    toEDNv = E.String . TL.toStrict
+    {-# INLINE toEDNv #-}
+
+instance FromEDN TL.Text where
+    parseEDNv (E.String t) = pure $ TL.fromStrict t
+    parseEDNv v = typeMismatch "String" v
+    {-# INLINE parseEDNv #-}
+
+instance ToEDN BS.ByteString where
+    toEDNv = E.String . TE.decodeUtf8
+    {-# INLINE toEDNv #-}
+
+instance FromEDN BS.ByteString where
+    parseEDNv (E.String t) = pure $ TE.encodeUtf8 t
+    parseEDNv v = typeMismatch "String" v
+    {-# INLINE parseEDNv #-}
+
+instance ToEDN BSL.ByteString where
+    toEDNv = E.String . TL.toStrict . TLE.decodeUtf8
+    {-# INLINE toEDNv #-}
+
+instance FromEDN BSL.ByteString where
+    parseEDNv (E.String t) = pure . TLE.encodeUtf8 . TL.fromStrict $ t
+    parseEDNv v = typeMismatch "String" v
     {-# INLINE parseEDNv #-}
 
 instance ToEDN Char where
