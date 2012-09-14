@@ -56,6 +56,14 @@ instance FromEDN Bool where
     parseEDNv v             = typeMismatch "Boolean" v
     {-# INLINE parseEDNv #-}
 
+instance ToEDN () where
+    toEDNv _ = E.List []
+    {-# INLINE toEDNv #-}
+
+instance FromEDN () where
+    parseEDNv (E.List l) | null l = pure ()
+    parseEDNv v = typeMismatch "()" v
+
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
              -> E.Value -- ^ The actual value encountered.
