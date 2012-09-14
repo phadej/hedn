@@ -8,8 +8,9 @@ import System.Exit (exitFailure)
 
 import qualified Data.ByteString.Lazy.Char8 as BSL
 
-import Data.EDN.Parser as P
 import Data.EDN.Types as E
+import Data.EDN.Parser (decode)
+import Data.EDN.Encode (encode)
 
 main :: IO ()
 main = do
@@ -17,15 +18,16 @@ main = do
     when (e > 0 || f > 0) $ exitFailure
 
 tests :: Test
-tests = TestList [ TestLabel "BSL -> TV decoder" testBasic
-                 , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (P.decode "№")))
+tests = TestList [ TestLabel "BSL -> TV decoder" $ TestList $ map makeDecodeCase decodeCases
+                 , TestLabel "TV -> BSL encoder" $ TestList $ map makeEncodeCase encodeCases
+                 , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (decode "№")))
                  ]
 
-testBasic :: Test
-testBasic = TestList $ map makeDecodeCase decodeCases
-
 makeDecodeCase :: (BSL.ByteString, E.TaggedValue) -> Test
-makeDecodeCase (i, o) = TestCase (assertEqual (BSL.unpack i) (Just o) (P.decode i))
+makeDecodeCase (i, o) = TestCase (assertEqual (BSL.unpack i) (Just o) (decode i))
+
+makeEncodeCase :: (E.TaggedValue, BSL.ByteString) -> Test
+makeEncodeCase (i, o) = TestCase (assertEqual (BSL.unpack o) o (encode i))
 
 decodeCases :: [(BSL.ByteString, E.TaggedValue)]
 decodeCases = [ ("nil", E.nil)
@@ -76,6 +78,49 @@ decodeCases = [ ("nil", E.nil)
 
               , ("#myapp/Person {:first \"Fred\" :last \"Mertz\"}", E.tag "myapp" "Person" sampleTaggedMap)
               , ("{:first \"Fred\" :last \"Mertz\"}", E.notag sampleTaggedMap)
+              ]
+
+encodeCases :: [(E.TaggedValue, BSL.ByteString)]
+encodeCases = [ (E.nil, "nil")
+
+              , (E.true, "true")
+              , (E.false, "false")
+
+              , (E.string "a nice string", "\"a nice string\"")
+              , ("overloaded", "\"overloaded\"")
+              , ("escape \rou\te \\ \"\north\"", "\"escape \\rou\\te \\\\ \\\"\\north\\\"\"")
+
+              , (E.char 'c', "\\c")
+              , (E.char '\\', "\\\\")
+              , (E.char '\n', "\\newline")
+              , (E.char '\t', "\\tab")
+              , (E.char ' ', "\\space")
+
+              , (E.symbol "justasymbol", "justasymbol")
+              , (E.symbol "with#stuff:inside", "with#stuff:inside")
+              , (E.symbolNS "whatever" "whenever", "whatever/whenever")
+              , (E.symbol "/", "/")
+
+              , (E.keyword "fred", ":fred")
+              , (E.keyword "my/fred", ":my/fred")
+              , (E.notag ":overloaded", ":overloaded") -- IsString kw transform only for untagged values
+
+              , (E.integer 42, "42")
+              , (E.integer (-1), "-1")
+
+              , (E.floating 100.50, "100.5")
+              , (E.floating (-3.14), "-3.14")
+
+              , (sampleList, "(a b 42)")
+              , (E.notag $ E.makeList [], "()")
+
+              , (sampleVec, "[a b 42]")
+              , (E.notag $ E.makeVec [], "[]")
+
+              , (sampleMap, "{\"foo\" :bar :a 1 [1 2 3] four}") -- Order not guaranteed
+              , (E.notag $ E.makeMap [], "{}")
+
+              , (E.tag "myapp" "Person" sampleTaggedMap, "#myapp/Person {:first \"Fred\" :last \"Mertz\"}")
               ]
 
 sampleList :: E.TaggedValue
