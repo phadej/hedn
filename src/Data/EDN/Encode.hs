@@ -32,7 +32,7 @@ fromValue (E.Boolean b) = if b then "true" else "false"
 
 fromValue (E.String t) = singleton '"' <> quote t <> singleton '"'
 
-fromValue (E.Character c) = singleton '\\' <> singleton c
+fromValue (E.Character c) = singleton '\\' <> quoteChar c
 
 fromValue (E.Symbol "" v) = string v
 fromValue (E.Symbol ns v) = string ns <> singleton '/' <> string v
@@ -67,6 +67,13 @@ quote q = case T.uncons t of
         escape '\r' = "\\r"
         escape '\t' = "\\t"
         escape c = singleton c
+
+quoteChar :: Char -> Builder
+quoteChar c = case c of
+    '\n' -> string "newline"
+    '\t' -> string "tab"
+    ' '  -> string "space"
+    _    -> singleton c
 
 fromList :: [E.TaggedValue] -> Builder
 fromList [] = ""
