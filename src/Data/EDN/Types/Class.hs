@@ -5,6 +5,7 @@ module Data.EDN.Types.Class (
 ) where
 
 import Control.Applicative (pure, (<$>))
+import Control.Monad (liftM, liftM2)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Encoding as TE
@@ -262,13 +263,5 @@ mapMset f s = mapM f (S.toList s) >>= return . S.fromList
 {-# INLINE mapMset #-}
 
 mapMmap :: (Ord a2, Monad m) => (a1 -> m a2) -> (b1 -> m b2) -> M.Map a1 b1 -> m (M.Map a2 b2)
-mapMmap kf vf m = do
-    let pairsIn = M.assocs m
-    pairsOut <- mapM fs pairsIn
-    return $! M.fromList pairsOut
-    where
-        fs (k, v) = do
-            newK <- kf k
-            newV <- vf v
-            return (newK, newV)
+mapMmap kf vf = liftM M.fromList . mapM (\(k, v) -> liftM2 (,) (kf k) (vf v)) . M.assocs
 {-# INLINE mapMmap #-}
