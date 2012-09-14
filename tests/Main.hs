@@ -148,4 +148,4 @@ sampleComment :: E.TaggedValue
 sampleComment = E.notag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.integer 4]
 
 sampleTaggedMap :: E.Value
-sampleTaggedMap = E.makeMap [ "first" ..= "Fred", "last" ..= "Mertz" ]
+sampleTaggedMap = E.makeMap [ "first" .= "Fred", "last" .= "Mertz" ]

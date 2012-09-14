@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings, FlexibleInstances, IncoherentInstances #-}
 
 module Data.EDN.Types.Class (
-    ToEDN, FromEDN, toEDN, fromEDN, fromEDNv
+    ToEDN, FromEDN, toEDN, fromEDN, fromEDNv, (.:), (.:?)
 ) where
 
 import Control.Applicative (pure, (<$>))
@@ -208,6 +208,32 @@ fromEDN = P.parse parseEDN
 fromEDNv :: FromEDN a => E.Value -> P.Result a
 fromEDNv = P.parse parseEDNv
 {-# INLINE fromEDNv #-}
+
+-- | Retrieve the value associated with the given key of an 'E.EDNMap'.
+-- The result is 'empty' if the key is not present or the value cannot
+-- be converted to the desired type.
+--
+-- This accessor is appropriate if the key and value /must/ be present
+-- in an object for it to be valid. If the key and value are
+-- optional, use '(.:?)' instead.
+(.:) :: (Show k, ToEDN k, FromEDN a) => E.EDNMap -> k -> P.Parser a
+emap .: key = case M.lookup (toEDNv key) emap of
+                  Nothing -> fail $ "key " ++ show key ++ " not present"
+                  Just v -> parseEDN v
+{-# INLINE (.:) #-}
+
+-- | Retrieve the value associated with the given key of an 'E.EDNMap'.
+-- The result is 'Nothing' if the key is not present, or 'empty' if
+-- the value cannot be converted to the desired type.
+--
+-- This accessor is most useful if the key and value can be absent
+-- from an object without affecting its validity.  If the key and
+-- value are mandatory, use '(.:)' instead.
+(.:?) :: (ToEDN k, FromEDN a) => E.EDNMap -> k -> P.Parser (Maybe a)
+emap .:? key = case M.lookup (toEDNv key) emap of
+                   Nothing -> pure Nothing
+                   Just v -> parseEDN v
+{-# INLINE (.:?) #-}
 
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.

@@ -3,7 +3,7 @@ module Data.EDN (
     Value(..), TaggedValue, Tagged(..),
 
     -- ** Type conversion
-    ToEDN, FromEDN, toEDN, fromEDN, fromEDNv,
+    ToEDN, FromEDN, toEDN, fromEDN, fromEDNv, (.:), (.:?),
 
     -- * Tag manipulation
     setTag, getTag, stripTag,
@@ -19,7 +19,7 @@ module Data.EDN (
     integer, floating,
 
     -- ** Containers
-    makeList, makeVec, makeSet, makeMap, (..=),
+    makeList, makeVec, makeSet, makeMap, (.=),
 
     -- * Encoding
     encode, fromValue, fromTagged,
@@ -29,6 +29,6 @@ module Data.EDN (
 ) where
 
 import Data.EDN.Types
-import Data.EDN.Types.Class (FromEDN, ToEDN, toEDN, fromEDN, fromEDNv)
+import Data.EDN.Types.Class (FromEDN, ToEDN, toEDN, fromEDN, fromEDNv, (.:), (.:?))
 import Data.EDN.Encode (encode, fromValue, fromTagged)
 import Data.EDN.Parser (decode, parseValue, parseTagged)

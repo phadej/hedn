@@ -21,7 +21,7 @@ module Data.EDN.Types (
     integer, floating,
 
     -- ** Containers
-    makeList, makeVec, makeSet, makeMap, (..=)
+    makeList, makeVec, makeSet, makeMap, (.=)
 ) where
 
 import Data.String (IsString(..))
@@ -178,6 +178,6 @@ makeMap = Map . M.fromList
 {-# INLINE makeMap #-}
 
 -- | Construct a 'Pair' from a key (as EDN keyword) and a value.
-(..=) :: ByteString -> TaggedValue -> Pair
-name ..= value = (Keyword name, value)
-{-# INLINE (..=) #-}
+(.=) :: ByteString -> TaggedValue -> Pair
+name .= value = (Keyword name, value)
+{-# INLINE (.=) #-}
