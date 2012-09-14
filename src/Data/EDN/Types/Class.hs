@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings, FlexibleInstances, IncoherentInstances #-}
 
 module Data.EDN.Types.Class (
     ToEDN, FromEDN, toEDN, fromEDN, fromEDNv
