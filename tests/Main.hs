@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, ExistentialQuantification #-}
 
 module Main where
 
@@ -7,7 +7,15 @@ import Control.Monad (when)
 import System.Exit (exitFailure)
 
 import qualified Data.ByteString.Lazy.Char8 as BSL
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.Text.Lazy as TL
+import qualified Data.Text as T
 
+import qualified Data.Vector as V
+import qualified Data.Set as S
+import qualified Data.Map as M
+
+import Data.EDN (ToEDN, toEDN)
 import Data.EDN.Types as E
 import Data.EDN.Parser (decode)
 import Data.EDN.Encode (encode)
@@ -21,6 +29,7 @@ tests :: Test
 tests = TestList [ TestLabel "BSL -> TV decoder" $ TestList $ map makeDecodeCase decodeCases
                  , TestLabel "TV -> BSL encoder" $ TestList $ map makeEncodeCase encodeCases
                  , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (decode "№")))
+                 , TestLabel "ToEDN conversion" $ TestList $ map makeToEDNcase toEDNcases
                  ]
 
 makeDecodeCase :: (BSL.ByteString, E.TaggedValue) -> Test
@@ -149,3 +158,43 @@ sampleComment = E.notag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.i
 
 sampleTaggedMap :: E.Value
 sampleTaggedMap = E.makeMap [ "first" .= "Fred", "last" .= "Mertz" ]
+
+data ToEDNCase = forall a. ToEDN a => ToEDNCase !a !E.TaggedValue
+
+makeToEDNcase :: ToEDNCase -> Test
+makeToEDNcase (ToEDNCase i o) = TestCase (assertEqual (show o) o (toEDN i))
+
+toEDNcases :: [ToEDNCase]
+toEDNcases = [ ToEDNCase (Nothing :: Maybe Bool) E.nil
+
+             , ToEDNCase (Left "hi" :: Either String ()) $ E.tag "either" "left" "hi"
+             , ToEDNCase (Right "z" :: Either () String) $ E.tag "either" "right" "z"
+
+             , ToEDNCase True E.true
+             , ToEDNCase False E.false
+
+             , ToEDNCase ("test" :: String) (E.string "test")
+             , ToEDNCase ("test" :: BSL.ByteString) "test"
+             , ToEDNCase ("test" :: BS.ByteString) "test"
+             , ToEDNCase ("test" :: TL.Text) "test"
+             , ToEDNCase ("test" :: T.Text) "test"
+
+             , ToEDNCase 'c' $ E.char 'c'
+             , ToEDNCase '\n' $ E.char '\n'
+             , ToEDNCase '\\' $ E.char '\\'
+
+             , ToEDNCase (3.14 :: Double) $ E.floating 3.14
+             , ToEDNCase (42 :: Integer) $ E.integer 42
+
+             , ToEDNCase () (E.notag $ E.makeList [])
+             , ToEDNCase ([] :: [()]) (E.notag $ E.makeList [])
+             , ToEDNCase (["yo", "wassup"] :: [String]) (E.notag $ E.makeList ["yo", "wassup"])
+             , ToEDNCase [E.string "i", "am", E.symbolNS "boxed" "container"] (E.notag $ E.makeList [E.string "i", "am", E.symbolNS "boxed" "container"])
+
+             , ToEDNCase (V.fromList ['o', 'm', 'g']) (E.notag $ E.makeVec [E.char 'o', E.char 'm', E.char 'g'])
+
+             , ToEDNCase (S.fromList ['o', 'm', 'g']) (E.notag $ E.makeSet [E.char 'o', E.char 'm', E.char 'g'])
+
+             , ToEDNCase (M.fromList [("test", "shmest"), ("foo", "bar")] :: M.Map String String) (E.notag $ E.makeMap [("test", "shmest"), ("foo", "bar")])
+             , ToEDNCase (M.fromList [(":test", "shmest"), (":foo", "bar")] :: EDNMap) (E.notag $ E.makeMap ["test" .= "shmest", "foo" .= "bar"])
+             ]

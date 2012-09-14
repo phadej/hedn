@@ -42,7 +42,7 @@ Test-Suite tests
   type:              exitcode-stdio-1.0
   main-is:           Main.hs
   hs-source-dirs:    tests/
-  build-depends:     base, hedn, HUnit, bytestring
+  build-depends:     base, hedn, HUnit, bytestring, text, containers, vector
   ghc-options:       -Wall
 
 source-repository head
