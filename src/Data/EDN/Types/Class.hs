@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Data.EDN.Types.Class where
 
 import Control.Applicative (pure, (<$>))
@@ -32,6 +34,18 @@ instance (FromEDN a) => (FromEDN (Maybe a)) where
     parseEDNv E.Nil = pure Nothing
     parseEDNv a = Just <$> parseEDNv a
     {-# INLINE parseEDNv #-}
+
+instance (ToEDN a, ToEDN b) => ToEDN (Either a b) where
+    toEDN (Left a) = E.tag "either" "left" $ toEDNv a
+    toEDN (Right b) = E.tag "either" "right" $ toEDNv b
+    {-# INLINE toEDN #-}
+
+instance (FromEDN a, FromEDN b) => FromEDN (Either a b) where
+    parseEDN (E.Tagged v "either" "left") = Left <$> parseEDNv v
+    parseEDN (E.Tagged v "either" "right") = Right <$> parseEDNv v
+    parseEDN (E.Tagged _ _ _) = fail "incorrect tag"
+    parseEDN (E.NoTag _) = fail "no tag"
+    {-# INLINE parseEDN #-}
 
 instance ToEDN Bool where
     toEDN = E.bool
