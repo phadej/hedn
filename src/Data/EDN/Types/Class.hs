@@ -7,13 +7,20 @@ import qualified Data.EDN.Types as E
 
 class ToEDN a where
     toEDN :: a -> E.TaggedValue
+    toEDN = E.notag . toEDNv
+    {-# INLINE toEDN #-}
+
+    toEDNv :: a -> E.Value
+    toEDNv = E.stripTag . toEDN
+    {-# INLINE toEDNv #-}
 
 class FromEDN a where
     parseEDN :: E.TaggedValue -> P.Parser a
-    parseEDNv :: E.Value -> P.Parser a
     parseEDN = parseEDNv . E.stripTag
-    parseEDNv = parseEDN . E.notag
     {-# INLINE parseEDN #-}
+
+    parseEDNv :: E.Value -> P.Parser a
+    parseEDNv = parseEDN . E.notag
     {-# INLINE parseEDNv #-}
 
 instance (ToEDN a) => ToEDN (Maybe a) where
