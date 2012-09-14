@@ -19,7 +19,7 @@ description:
     Based on specs published at <https://github.com/edn-format/edn>.
 
 extra-source-files:
-  tests/TestParser.hs
+  tests/Main.hs
 
 flag developer
   description: operate in developer mode
