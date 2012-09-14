@@ -2,6 +2,9 @@ module Data.EDN (
     -- * Core EDN types
     Value(..), TaggedValue, Tagged(..),
 
+    -- ** Type conversion
+    ToEDN, FromEDN,
+
     -- * Tag manipulation
     setTag, getTag, stripTag,
 
@@ -22,10 +25,7 @@ module Data.EDN (
     encode, fromValue, fromTagged,
 
     -- * Parsing
-    decode, parseValue, parseTagged,
-
-    -- * Type conversion
-    ToEDN, FromEDN
+    decode, parseValue, parseTagged
 ) where
 
 import Data.EDN.Types
