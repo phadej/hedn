@@ -64,6 +64,7 @@ instance ToEDN () where
 instance FromEDN () where
     parseEDNv (E.List l) | null l = pure ()
     parseEDNv v = typeMismatch "()" v
+    {-# INLINE parseEDNv #-}
 
 instance ToEDN [Char] where
     toEDNv = E.String . T.pack
