@@ -22,9 +22,13 @@ module Data.EDN (
     encode, fromValue, fromTagged,
 
     -- * Parsing
-    decode, parseValue, parseTagged
+    decode, parseValue, parseTagged,
+
+    -- * Type conversion
+    ToEDN, FromEDN
 ) where
 
 import Data.EDN.Types
+import Data.EDN.Types.Class (FromEDN, ToEDN)
 import Data.EDN.Encode (encode, fromValue, fromTagged)
 import Data.EDN.Parser (decode, parseValue, parseTagged)
