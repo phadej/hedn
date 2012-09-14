@@ -9,6 +9,7 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Lazy.Encoding as TLE
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
+import qualified Data.Vector as V
 
 import Data.Parser as P
 import qualified Data.EDN.Types as E
@@ -153,6 +154,15 @@ instance ToEDN a => ToEDN [a] where
 instance FromEDN a => FromEDN [a] where
     parseEDNv (E.List vs) = mapM parseEDN vs
     parseEDNv v = typeMismatch "List" v
+    {-# INLINE parseEDNv #-}
+
+instance ToEDN a => ToEDN (V.Vector a) where
+    toEDNv = E.Vec . V.map toEDN
+    {-# INLINE toEDNv #-}
+
+instance FromEDN a => FromEDN (V.Vector a) where
+    parseEDNv (E.Vec as) = V.mapM parseEDN as
+    parseEDNv v = typeMismatch "Vec" v
     {-# INLINE parseEDNv #-}
 
 -- | Fail parsing due to a type mismatch, with a descriptive message.
