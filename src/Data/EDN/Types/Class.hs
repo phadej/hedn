@@ -175,6 +175,18 @@ instance (Ord a, FromEDN a) => FromEDN (S.Set a) where
     parseEDNv v = typeMismatch "Set" v
     {-# INLINE parseEDNv #-}
 
+instance ToEDN E.Value where
+    toEDNv = id
+
+instance FromEDN E.Value where
+    parseEDNv = pure
+
+instance ToEDN E.TaggedValue where
+    toEDN = id
+
+instance FromEDN E.TaggedValue where
+    parseEDN = pure
+
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
              -> E.Value -- ^ The actual value encountered.
