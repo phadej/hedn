@@ -84,6 +84,24 @@ instance FromEDN Char where
     parseEDNv v = typeMismatch "Character" v
     {-# INLINE parseEDNv #-}
 
+instance ToEDN Double where
+    toEDNv = E.Floating
+    {-# INLINE toEDNv #-}
+
+instance FromEDN Double where
+    parseEDNv (E.Floating d) = pure d
+    parseEDNv v = typeMismatch "Floating" v
+    {-# INLINE parseEDNv #-}
+
+instance ToEDN Integer where
+    toEDNv = E.Integer
+    {-# INLINE toEDNv #-}
+
+instance FromEDN Integer where
+    parseEDNv (E.Integer i) = pure i
+    parseEDNv v = typeMismatch "Integer" v
+    {-# INLINE parseEDNv #-}
+
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
              -> E.Value -- ^ The actual value encountered.
