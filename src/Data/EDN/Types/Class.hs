@@ -146,6 +146,15 @@ instance FromEDN Integer where
     parseEDNv v = typeMismatch "Integer" v
     {-# INLINE parseEDNv #-}
 
+instance ToEDN a => ToEDN [a] where
+    toEDNv = E.List . map toEDN
+    {-# INLINE toEDNv #-}
+
+instance FromEDN a => FromEDN [a] where
+    parseEDNv (E.List vs) = mapM parseEDN vs
+    parseEDNv v = typeMismatch "List" v
+    {-# INLINE parseEDNv #-}
+
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
              -> E.Value -- ^ The actual value encountered.
