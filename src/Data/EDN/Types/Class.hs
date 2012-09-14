@@ -10,6 +10,7 @@ import qualified Data.Text.Lazy.Encoding as TLE
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.Vector as V
+import qualified Data.Set as S
 
 import Data.Parser as P
 import qualified Data.EDN.Types as E
@@ -165,6 +166,15 @@ instance FromEDN a => FromEDN (V.Vector a) where
     parseEDNv v = typeMismatch "Vec" v
     {-# INLINE parseEDNv #-}
 
+instance (Ord a, ToEDN a) => ToEDN (S.Set a) where
+    toEDNv = E.Set . S.map toEDN
+    {-# INLINE toEDNv #-}
+
+instance (Ord a, FromEDN a) => FromEDN (S.Set a) where
+    parseEDNv (E.Set s) = mapMset parseEDN s
+    parseEDNv v = typeMismatch "Set" v
+    {-# INLINE parseEDNv #-}
+
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
              -> E.Value -- ^ The actual value encountered.
@@ -186,3 +196,7 @@ typeMismatch expected actual =
         E.Vec _ -> "Vec"
         E.Map _ -> "Map"
         E.Set _ -> "Set"
+
+mapMset :: (Monad m, Ord b) => (a -> m b) -> S.Set a -> m (S.Set b)
+mapMset f s = mapM f (S.toList s) >>= return . S.fromList
+{-# INLINE mapMset #-}
