@@ -1,6 +1,6 @@
 module Data.EDN (
     -- * Core EDN types
-    Value(..), TaggedValue(..),
+    Value(..), TaggedValue, Tagged(..),
 
     -- * Tag manipulation
     setTag, getTag, stripTag,

@@ -10,6 +10,11 @@ class ToEDN a where
 
 class FromEDN a where
     parseEDN :: E.TaggedValue -> P.Parser a
+    parseEDNv :: E.Value -> P.Parser a
+    parseEDN = parseEDNv . E.stripTag
+    parseEDNv = parseEDN . E.notag
+    {-# INLINE parseEDN #-}
+    {-# INLINE parseEDNv #-}
 
 instance (ToEDN a) => ToEDN (Maybe a) where
     toEDN (Just a) = toEDN a
@@ -17,30 +22,28 @@ instance (ToEDN a) => ToEDN (Maybe a) where
     {-# INLINE toEDN #-}
 
 instance (FromEDN a) => (FromEDN (Maybe a)) where
-    parseEDN (E.NoTag E.Nil) = pure Nothing
-    parseEDN (E.Tagged E.Nil _ _) = pure Nothing
-    parseEDN a = Just <$> parseEDN a
-    {-# INLINE parseEDN #-}
+    parseEDNv E.Nil = pure Nothing
+    parseEDNv a = Just <$> parseEDNv a
+    {-# INLINE parseEDNv #-}
 
 instance ToEDN Bool where
     toEDN = E.bool
     {-# INLINE toEDN #-}
 
 instance FromEDN Bool where
-    parseEDN (E.NoTag  (E.Boolean b))     = pure b
-    parseEDN (E.Tagged (E.Boolean b) _ _) = pure b
-    parseEDN v                            = typeMismatch "Boolean" v
-    {-# INLINE parseEDN #-}
+    parseEDNv (E.Boolean b) = pure b
+    parseEDNv v             = typeMismatch "Boolean" v
+    {-# INLINE parseEDNv #-}
 
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
-             -> E.TaggedValue  -- ^ The actual value encountered.
+             -> E.Value -- ^ The actual value encountered.
              -> P.Parser a
 typeMismatch expected actual =
     fail $ "when expecting a " ++ expected ++ ", encountered " ++ name ++
            " instead"
   where
-    name = case E.stripTag actual of
+    name = case actual of
         E.Nil -> "Nil"
         E.Boolean _ -> "Boolean"
         E.String _ -> "String"

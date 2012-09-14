@@ -1,6 +1,8 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module Data.EDN.Types (
     -- * Types
-    TaggedValue(..), Value(..),
+    Value(..), Tagged(..), TaggedValue,
 
     -- ** Internal containers
     EDNList, EDNVec, EDNSet, EDNMap, Pair,
@@ -31,6 +33,13 @@ import qualified Data.Vector as V
 import qualified Data.Map as M
 import qualified Data.Set as S
 
+-- | Abstract namespaced tag.
+data Tagged a = NoTag !a
+              | Tagged !a !ByteString !ByteString
+              deriving (Eq, Ord, Show)
+
+type TaggedValue = Tagged Value
+
 type EDNList = [TaggedValue]
 type EDNVec = V.Vector TaggedValue
 type EDNMap = M.Map Value TaggedValue
@@ -51,11 +60,6 @@ data Value = Nil
            | Set !EDNSet
            deriving (Eq, Ord, Show)
 
--- | A 'Value' wrapped into a namespaced tag.
-data TaggedValue = NoTag !Value
-                 | Tagged !Value !ByteString !ByteString
-                 deriving (Eq, Ord, Show)
-
 -- | Strings starting with \":\" will become keywords.
 instance IsString Value where
   fromString (':':s) = Keyword . BS.pack $ s
@@ -63,7 +67,7 @@ instance IsString Value where
   {-# INLINE fromString #-}
 
 -- | Strings will become an tagless EDN strings.
-instance IsString TaggedValue where
+instance IsString (Tagged Value) where
   fromString = string . T.pack
   {-# INLINE fromString #-}
 

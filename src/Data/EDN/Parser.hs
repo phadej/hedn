@@ -20,7 +20,7 @@ import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Encoding as TLE
 import Data.ByteString.Search (replace)
 
-import Data.EDN.Types (Value(..), TaggedValue(..), makeVec, makeMap, makeSet)
+import Data.EDN.Types (Value(..), Tagged(..), TaggedValue, makeVec, makeMap, makeSet)
 
 isSpaceOrComma :: Char -> Bool
 isSpaceOrComma ' ' = True
