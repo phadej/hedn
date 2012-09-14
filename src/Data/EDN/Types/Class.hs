@@ -11,6 +11,7 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.Vector as V
 import qualified Data.Set as S
+import qualified Data.Map as M
 
 import Data.Parser as P
 import qualified Data.EDN.Types as E
@@ -175,6 +176,15 @@ instance (Ord a, FromEDN a) => FromEDN (S.Set a) where
     parseEDNv v = typeMismatch "Set" v
     {-# INLINE parseEDNv #-}
 
+instance (ToEDN a, ToEDN b) => ToEDN (M.Map a b) where
+    toEDNv m = E.Map $! M.fromList [(toEDNv k, toEDN v) | (k, v) <- M.assocs m]
+    {-# INLINE toEDNv #-}
+
+instance (Ord a, FromEDN a, FromEDN b) => FromEDN (M.Map a b) where
+    parseEDNv (E.Map m) = mapMmap parseEDNv parseEDN m
+    parseEDNv v = typeMismatch "Map" v
+    {-# INLINE parseEDNv #-}
+
 instance ToEDN E.Value where
     toEDNv = id
 
@@ -212,3 +222,15 @@ typeMismatch expected actual =
 mapMset :: (Monad m, Ord b) => (a -> m b) -> S.Set a -> m (S.Set b)
 mapMset f s = mapM f (S.toList s) >>= return . S.fromList
 {-# INLINE mapMset #-}
+
+mapMmap :: (Ord a2, Monad m) => (a1 -> m a2) -> (b1 -> m b2) -> M.Map a1 b1 -> m (M.Map a2 b2)
+mapMmap kf vf m = do
+    let pairsIn = M.assocs m
+    pairsOut <- mapM fs pairsIn
+    return $! M.fromList pairsOut
+    where
+        fs (k, v) = do
+            newK <- kf k
+            newV <- vf v
+            return (newK, newV)
+{-# INLINE mapMmap #-}
