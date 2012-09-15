@@ -126,18 +126,18 @@ floating :: Double -> TaggedValue
 floating = NoTag . Floating
 {-# INLINE floating #-}
 
--- | Attach a namespaced tag to a 'Value'.
-tag :: ByteString -> ByteString -> Value -> TaggedValue
+-- | Attach a namespaced tag to a value.
+tag :: ByteString -> ByteString -> a -> Tagged a
 tag ns t value = Tagged value ns t
 {-# INLINE tag #-}
 
--- | Wrap a 'Value' into tagless container.
-notag :: Value -> TaggedValue
+-- | Wrap a value into tagless container.
+notag :: a -> Tagged a
 notag = NoTag
 {-# INLINE notag #-}
 
--- | Replace a tag on a value.
-setTag :: ByteString -> ByteString -> TaggedValue -> TaggedValue
+-- | Replace a tag on a 'Tagged' value.
+setTag :: ByteString -> ByteString -> Tagged a -> Tagged a
 setTag ns t (NoTag v) = tag ns t v
 setTag ns t (Tagged v _ _) = tag ns t v
 {-# INLINE setTag #-}
@@ -148,7 +148,7 @@ getTag (NoTag _) = (BS.empty, BS.empty)
 getTag (Tagged _ ns t) = (ns, t)
 
 -- | Extract bare value from a tagged or tagless container.
-stripTag :: TaggedValue -> Value
+stripTag :: Tagged a -> a
 stripTag (NoTag v) = v
 stripTag (Tagged v _ _) = v
 {-# INLINE stripTag #-}

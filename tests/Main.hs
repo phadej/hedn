@@ -15,7 +15,7 @@ import qualified Data.Vector as V
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import Data.EDN (ToEDN, toEDN)
+import Data.EDN (ToEDN, toEDN, fromEDN, Result(..))
 import Data.EDN.Types as E
 import Data.EDN.Parser (decode)
 import Data.EDN.Encode (encode)
@@ -30,6 +30,7 @@ tests = TestList [ TestLabel "BSL -> TV decoder" $ TestList $ map makeDecodeCase
                  , TestLabel "TV -> BSL encoder" $ TestList $ map makeEncodeCase encodeCases
                  , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (decode "№")))
                  , TestLabel "ToEDN conversion" $ TestList $ map makeToEDNcase toEDNcases
+                 , TestLabel "'Tagged a' conversion" $ TestList taggedConversion
                  ]
 
 makeDecodeCase :: (BSL.ByteString, E.TaggedValue) -> Test
@@ -198,3 +199,11 @@ toEDNcases = [ ToEDNCase (Nothing :: Maybe Bool) E.nil
              , ToEDNCase (M.fromList [("test", "shmest"), ("foo", "bar")] :: M.Map String String) (E.notag $ E.makeMap [("test", "shmest"), ("foo", "bar")])
              , ToEDNCase (M.fromList [(":test", "shmest"), (":foo", "bar")] :: EDNMap) (E.notag $ E.makeMap ["test" .= "shmest", "foo" .= "bar"])
              ]
+
+
+taggedConversion :: [Test]
+taggedConversion = [ TestCase (assertEqual "toEDN tagged" (E.tag "wo" "ot" (E.Boolean False)) (toEDN $ E.tag "wo" "ot" False))
+                   , TestCase (assertEqual "toEDN notag" E.false (toEDN $ E.notag False))
+                   , TestCase (assertEqual "fromEDN tagged" (Success $ E.tag "wo" "ot" False) (fromEDN $ E.tag "wo" "ot" (E.Boolean False)))
+                   , TestCase (assertEqual "fromEDN notag" (Success $ E.notag False) (fromEDN $ E.false))
+                   ]

@@ -59,6 +59,16 @@ instance (FromEDN a, FromEDN b) => FromEDN (Either a b) where
     parseEDN (E.NoTag _) = fail "no tag"
     {-# INLINE parseEDN #-}
 
+instance (ToEDN a) => ToEDN (E.Tagged a) where
+    toEDN (E.Tagged v ns t) = E.setTag ns t $ toEDN v
+    toEDN (E.NoTag v) = toEDN v
+    {-# INLINE toEDN #-}
+
+instance (FromEDN a) => FromEDN (E.Tagged a) where
+   parseEDN (E.Tagged v ns t) = E.tag ns t <$> parseEDNv v
+   parseEDN (E.NoTag v) = E.notag <$> parseEDNv v
+   {-# INLINE parseEDN #-}
+
 instance ToEDN Bool where
     toEDN = E.bool
     {-# INLINE toEDN #-}
