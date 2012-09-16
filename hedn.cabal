@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                hedn
-version:             0.1.5.1
+version:             0.1.5.2
 synopsis:            EDN parsing and encoding
 homepage:            https://bitbucket.org/dpwiz/hedn
 license:             BSD3
