@@ -38,6 +38,10 @@ data Tagged a = NoTag !a
               | Tagged !a !ByteString !ByteString
               deriving (Eq, Ord, Show)
 
+instance Functor Tagged where
+    fmap f (NoTag v) = NoTag (f v)
+    fmap f (Tagged v ns t) = Tagged (f v) ns t
+
 type TaggedValue = Tagged Value
 
 type EDNList = [TaggedValue]
