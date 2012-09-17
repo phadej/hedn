@@ -103,6 +103,7 @@ encodeCases = [ (E.nil, "nil")
               , (E.char 'c', "\\c")
               , (E.char '\\', "\\\\")
               , (E.char '\n', "\\newline")
+              , (E.char '\r', "\\return")
               , (E.char '\t', "\\tab")
               , (E.char ' ', "\\space")
 

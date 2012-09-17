@@ -71,6 +71,7 @@ quote q = case T.uncons t of
 quoteChar :: Char -> Builder
 quoteChar c = case c of
     '\n' -> string "newline"
+    '\r' -> string "return"
     '\t' -> string "tab"
     ' '  -> string "space"
     _    -> singleton c

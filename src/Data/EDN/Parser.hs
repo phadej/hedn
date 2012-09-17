@@ -73,6 +73,7 @@ parseCharacter = do
     x <- string "newline" <|> string "space" <|> string "tab" <|> A.take 1
     return . Character $! case x of
                               "newline" -> '\n'
+                              "return" -> '\r'
                               "space" -> ' '
                               "tab" -> '\t'
                               _ -> BS.head x
@@ -80,26 +81,28 @@ parseCharacter = do
 parseSymbol :: Parser Value
 parseSymbol = do
     skipSoC
-    c <- satisfy (inClass "a-zA-Z.*/!?+_-")
+    c <- satisfy (inClass "a-zA-Z.*/!?$%&=+_-")
     (ns, val) <- withNS c <|> withoutNS c
     return $! Symbol ns val
     where
         withNS c = do
-            ns <- takeWhile1 (inClass "a-zA-Z0-9#:.*!?+_-")
+            ns <- takeWhile1 (inClass "a-zA-Z0-9#:.*!?$%&=+_-")
             char '/'
-            val <- takeWhile1 (inClass "a-zA-Z0-9#:.*!?+_-")
-            return (c `BS.cons` ns, val)
+            vc <- satisfy (inClass "a-zA-Z.*/!?$%&=+_-")
+            val <- takeWhile1 (inClass "a-zA-Z0-9#:.*!?$%&=+_-")
+            return (c `BS.cons` ns, vc `BS.cons` val)
 
         withoutNS c = do
-            val <- takeWhile (inClass "a-zA-Z0-9#:.*!?+_-")
+            val <- takeWhile (inClass "a-zA-Z0-9#:.*!?$%&=+_-")
             return ("", c `BS.cons` val)
 
 parseKeyword :: Parser Value
 parseKeyword = do
     skipSoC
     char ':'
-    x <- takeWhile1 (inClass "a-zA-Z0-9.*/!?+_-")
-    return $! Keyword x
+    c <- satisfy (inClass "a-zA-Z.*/!?$%&=+_-")
+    x <- takeWhile (inClass "a-zA-Z0-9#:.*/!?$%&=+_-")
+    return $! Keyword (c `BS.cons` x)
 
 parseNumber :: Parser Value
 parseNumber = do
