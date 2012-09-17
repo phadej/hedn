@@ -15,9 +15,10 @@ import qualified Data.Vector as V
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import Data.EDN (ToEDN, toEDN, fromEDN, Result(..))
+import Data.EDN (ToEDN, toEDN, fromEDN)
 import Data.EDN.Types as E
-import Data.EDN.Parser (decode)
+import Data.EDN.Types.Class (Result(..), (.=))
+import Data.EDN.Parser (parseMaybe)
 import Data.EDN.Encode (encode)
 
 main :: IO ()
@@ -28,13 +29,13 @@ main = do
 tests :: Test
 tests = TestList [ TestLabel "BSL -> TV decoder" $ TestList $ map makeDecodeCase decodeCases
                  , TestLabel "TV -> BSL encoder" $ TestList $ map makeEncodeCase encodeCases
-                 , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (decode "№")))
+                 , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (parseMaybe "№")))
                  , TestLabel "ToEDN conversion" $ TestList $ map makeToEDNcase toEDNcases
                  , TestLabel "'Tagged a' conversion" $ TestList taggedConversion
                  ]
 
 makeDecodeCase :: (BSL.ByteString, E.TaggedValue) -> Test
-makeDecodeCase (i, o) = TestCase (assertEqual (BSL.unpack i) (Just o) (decode i))
+makeDecodeCase (i, o) = TestCase (assertEqual (BSL.unpack i) (Just o) (parseMaybe i))
 
 makeEncodeCase :: (E.TaggedValue, BSL.ByteString) -> Test
 makeEncodeCase (i, o) = TestCase (assertEqual (BSL.unpack o) o (encode i))
@@ -159,7 +160,7 @@ sampleComment :: E.TaggedValue
 sampleComment = E.notag $ E.makeList [E.integer 1, E.integer 2, E.integer 3, E.integer 4]
 
 sampleTaggedMap :: E.Value
-sampleTaggedMap = E.makeMap [ "first" .= "Fred", "last" .= "Mertz" ]
+sampleTaggedMap = E.makeMap [ "first" .= E.string "Fred", "last" .= E.string "Mertz" ]
 
 data ToEDNCase = forall a. ToEDN a => ToEDNCase !a !E.TaggedValue
 
@@ -198,7 +199,7 @@ toEDNcases = [ ToEDNCase (Nothing :: Maybe Bool) E.nil
              , ToEDNCase (S.fromList ['o', 'm', 'g']) (E.notag $ E.makeSet [E.char 'o', E.char 'm', E.char 'g'])
 
              , ToEDNCase (M.fromList [("test", "shmest"), ("foo", "bar")] :: M.Map String String) (E.notag $ E.makeMap [("test", "shmest"), ("foo", "bar")])
-             , ToEDNCase (M.fromList [(":test", "shmest"), (":foo", "bar")] :: EDNMap) (E.notag $ E.makeMap ["test" .= "shmest", "foo" .= "bar"])
+             , ToEDNCase (M.fromList [(":test", "shmest"), (":foo", "bar")] :: EDNMap) (E.notag $ E.makeMap ["test" .= E.string "shmest", "foo" .= E.string "bar"])
              ]
 
 
