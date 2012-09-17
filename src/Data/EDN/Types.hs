@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Data.EDN.Types (
     -- * Types
@@ -25,13 +26,21 @@ module Data.EDN.Types (
 ) where
 
 import Data.String (IsString(..))
+import Control.DeepSeq (NFData(..))
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Internal as BLI
 import qualified Data.Vector as V
 import qualified Data.Map as M
 import qualified Data.Set as S
+
+instance NFData ByteString
+
+instance NFData BLI.ByteString where
+    rnf BLI.Empty       = ()
+    rnf (BLI.Chunk _ b) = rnf b
 
 -- | Abstract namespaced tag.
 data Tagged a = NoTag !a
@@ -41,6 +50,10 @@ data Tagged a = NoTag !a
 instance Functor Tagged where
     fmap f (NoTag v) = NoTag (f v)
     fmap f (Tagged v ns t) = Tagged (f v) ns t
+
+instance NFData a => NFData (Tagged a) where
+    rnf (NoTag v) = rnf v
+    rnf (Tagged v ns t) = rnf v `seq` rnf ns `seq` rnf t
 
 type TaggedValue = Tagged Value
 
@@ -74,6 +87,20 @@ instance IsString Value where
 instance IsString (Tagged Value) where
   fromString = string . T.pack
   {-# INLINE fromString #-}
+
+instance NFData Value where
+  rnf (Map m) = rnf m
+  rnf (Set s) = rnf s
+  rnf (Vec v) = V.foldl' (\x y -> rnf y `seq` x) () v
+  rnf (List l) = rnf l
+  rnf (Floating f) = rnf f
+  rnf (Integer i) = rnf i
+  rnf (Symbol ns s) = rnf ns `seq` rnf s
+  rnf (Keyword kw) = rnf kw
+  rnf (String t) = rnf t
+  rnf (Character c) = rnf c
+  rnf (Boolean b) = rnf b
+  rnf Nil = ()
 
 -- | Basic EDN nil.
 nil :: TaggedValue
