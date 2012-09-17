@@ -15,11 +15,10 @@ import qualified Data.Vector as V
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import Data.EDN (ToEDN, toEDN, fromEDN)
+import Data.EDN (encode, decode, ToEDN, toEDN, FromEDN, fromEDN)
 import Data.EDN.Types as E
 import Data.EDN.Types.Class (Result(..), (.=))
 import Data.EDN.Parser (parseMaybe)
-import Data.EDN.Encode (encode)
 
 main :: IO ()
 main = do
@@ -27,21 +26,22 @@ main = do
     when (e > 0 || f > 0) $ exitFailure
 
 tests :: Test
-tests = TestList [ TestLabel "BSL -> TV decoder" $ TestList $ map makeDecodeCase decodeCases
+tests = TestList [ TestLabel "BSL -> TV parser" $ TestList $ map makeParserCase parserCases
                  , TestLabel "TV -> BSL encoder" $ TestList $ map makeEncodeCase encodeCases
-                 , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (parseMaybe "№")))
                  , TestLabel "ToEDN conversion" $ TestList $ map makeToEDNcase toEDNcases
+                 , TestLabel "FromEDN converter/decoder" $ TestList $ map makeFromEDNcase fromEDNcases
+                 , TestLabel "decoder fail" (TestCase (assertEqual "bad unicode" Nothing (parseMaybe "№")))
                  , TestLabel "'Tagged a' conversion" $ TestList taggedConversion
                  ]
 
-makeDecodeCase :: (BSL.ByteString, E.TaggedValue) -> Test
-makeDecodeCase (i, o) = TestCase (assertEqual (BSL.unpack i) (Just o) (parseMaybe i))
+makeParserCase :: (BSL.ByteString, E.TaggedValue) -> Test
+makeParserCase (i, o) = TestCase (assertEqual (BSL.unpack i) (Just o) (parseMaybe i))
 
 makeEncodeCase :: (E.TaggedValue, BSL.ByteString) -> Test
 makeEncodeCase (i, o) = TestCase (assertEqual (BSL.unpack o) o (encode i))
 
-decodeCases :: [(BSL.ByteString, E.TaggedValue)]
-decodeCases = [ ("nil", E.nil)
+parserCases :: [(BSL.ByteString, E.TaggedValue)]
+parserCases = [ ("nil", E.nil)
 
               , ("true", E.true)
               , ("false", E.false)
@@ -172,6 +172,7 @@ toEDNcases = [ ToEDNCase (Nothing :: Maybe Bool) E.nil
 
              , ToEDNCase (Left "hi" :: Either String ()) $ E.tag "either" "left" "hi"
              , ToEDNCase (Right "z" :: Either () String) $ E.tag "either" "right" "z"
+             , ToEDNCase (Just '!') (E.char '!')
 
              , ToEDNCase True E.true
              , ToEDNCase False E.false
@@ -202,6 +203,33 @@ toEDNcases = [ ToEDNCase (Nothing :: Maybe Bool) E.nil
              , ToEDNCase (M.fromList [(":test", "shmest"), (":foo", "bar")] :: EDNMap) (E.notag $ E.makeMap ["test" .= E.string "shmest", "foo" .= E.string "bar"])
              ]
 
+data FromEDNCase = forall a. (FromEDN a, Show a, Eq a) => FromEDNCase !BSL.ByteString !a
+
+makeFromEDNcase :: FromEDNCase -> Test
+makeFromEDNcase (FromEDNCase i o) = TestCase $ assertEqual (BSL.unpack i) (Just o) (decode i)
+
+fromEDNcases :: [FromEDNCase]
+fromEDNcases = [ FromEDNCase "nil" (Nothing :: Maybe Bool)
+
+               , FromEDNCase "false" False
+               , FromEDNCase "true" True
+
+               , FromEDNCase "#either/left hi" (Left "hi" :: Either String ())
+               , FromEDNCase "#either/right z" (Right "z" :: Either () String)
+               , FromEDNCase "\"ok fine\"" (Just "ok fine" :: Maybe T.Text)
+               , FromEDNCase "nil" (Nothing :: Maybe BSL.ByteString)
+
+               , FromEDNCase "\\newline" '\n'
+               , FromEDNCase "\\z" 'z'
+
+               , FromEDNCase "42" (42 :: Integer)
+               , FromEDNCase "-3.14" (-3.14 :: Double)
+
+               , FromEDNCase "(hello world)" (["hello", "world"] :: [String])
+               , FromEDNCase "[3 2 1 \"Kaboom!\"]" $ E.makeVec [E.integer 3, E.integer 2, E.integer 1, "Kaboom!"]
+               , FromEDNCase "#{a/bag :of \"bugs\"}" $ E.makeSet [E.symbolNS "a" "bag", E.keyword "of", E.string "bugs"]
+               , FromEDNCase "{json: \"like\", but/not: \"really\"}" $ (M.fromList [("json:", "like"), ("but/not:", "really")] :: M.Map String String)
+               ]
 
 taggedConversion :: [Test]
 taggedConversion = [ TestCase (assertEqual "toEDN tagged" (E.tag "wo" "ot" (E.Boolean False)) (toEDN $ E.tag "wo" "ot" False))

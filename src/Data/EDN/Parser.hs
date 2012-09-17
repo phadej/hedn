@@ -89,7 +89,7 @@ parseSymbol = do
     return $! Symbol ns val
     where
         withNS c = do
-            ns <- takeWhile1 (inClass "a-zA-Z0-9#:.*!?$%&=+_-")
+            ns <- takeWhile (inClass "a-zA-Z0-9#:.*!?$%&=+_-")
             char '/'
             vc <- satisfy (inClass "a-zA-Z.*/!?$%&=+_-")
             val <- takeWhile1 (inClass "a-zA-Z0-9#:.*!?$%&=+_-")
