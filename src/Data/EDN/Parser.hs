@@ -1,8 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | Parse an UTF-8 encoded EDN string into a haskell representation of EDN objects.
+-- Use 'Data.EDN.decode' to get actual types.
+
 module Data.EDN.Parser (
     -- * Data parsers
-    decode, parseBSL, parseBS, parseT, parseTL, parseS,
+    parseMaybe, parseBSL, parseBS, parseT, parseTL, parseS,
     -- * Attoparsec implementation
     parseValue, parseTagged
 ) where
@@ -199,9 +202,9 @@ parseTagged = do
             value <- parseValue
             return $! NoTag value
 
--- | Decode a lazy 'BSL.ByteString' into a 'TaggedValue'. If fails due to incomplete or invalid input, 'Nothing' is returned.
-decode :: BSL.ByteString -> Maybe TaggedValue
-decode src = case parseBSL src of
+-- | Parse a lazy 'BSL.ByteString' into a 'TaggedValue'. If fails due to incomplete or invalid input, 'Nothing' is returned.
+parseMaybe :: BSL.ByteString -> Maybe TaggedValue
+parseMaybe src = case parseBSL src of
     AL.Done _ r -> Just r
     _           -> Nothing
 
@@ -229,4 +232,3 @@ parseT = parseBS . TE.encodeUtf8
 parseS :: [Char] -> AL.Result TaggedValue
 parseS = parseBSL . BSL.pack
 {-# INLINE parseS #-}
-

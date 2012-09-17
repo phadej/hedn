@@ -1,12 +1,12 @@
 module Data.EDN (
+    -- * Encoding and decoding
+    decode, encode,
+
     -- * Core EDN types
     Value(..), TaggedValue, Tagged(..),
 
-    -- ** Type conversion
-    ToEDN, FromEDN, toEDN, fromEDN, fromEDNv, (.:), (.:?),
-
-    -- * Tag manipulation
-    setTag, getTag, stripTag,
+    -- * Type conversion
+    ToEDN, FromEDN, toEDN, fromEDN, fromEDNv, (.:), (.:?), (.!=),
 
     -- * Constructors
     tag, notag,
@@ -19,17 +19,16 @@ module Data.EDN (
     integer, floating,
 
     -- ** Containers
-    makeList, makeVec, makeSet, makeMap, (.=),
+    makeList, makeVec, makeSet, makeMap, Pair, (.=),
 
-    -- * Encoding
-    encode, fromValue, fromTagged,
+    -- * Tag manipulation
+    setTag, getTag, stripTag,
 
     -- * Parsing
-    decode, parseValue, parseTagged, Result(..)
+    parseMaybe
 ) where
 
 import Data.EDN.Types
-import Data.EDN.Types.Class (FromEDN, ToEDN, toEDN, fromEDN, fromEDNv, (.:), (.:?))
-import Data.EDN.Encode (encode, fromValue, fromTagged)
-import Data.EDN.Parser (decode, parseValue, parseTagged)
-import Data.Parser (Result(..))
+import Data.EDN.Types.Class (decode, FromEDN, ToEDN, toEDN, fromEDN, fromEDNv, (.:), (.:?), (.!=), (.=))
+import Data.EDN.Encode (encode)
+import Data.EDN.Parser (parseMaybe)

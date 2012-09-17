@@ -21,7 +21,7 @@ module Data.EDN.Types (
     integer, floating,
 
     -- ** Containers
-    makeList, makeVec, makeSet, makeMap, (.=)
+    makeList, makeVec, makeSet, makeMap
 ) where
 
 import Data.String (IsString(..))
@@ -44,10 +44,10 @@ instance Functor Tagged where
 
 type TaggedValue = Tagged Value
 
-type EDNList = [TaggedValue]
-type EDNVec = V.Vector TaggedValue
-type EDNMap = M.Map Value TaggedValue
-type EDNSet = S.Set TaggedValue
+type EDNList = [TaggedValue] -- ^ An EDN list (head:tail container).
+type EDNVec = V.Vector TaggedValue -- ^ An EDN vector (position-indexed container) of EDN values.
+type EDNMap = M.Map Value TaggedValue -- ^ An EDN map (key/value container). Keys are untagged and values are tagged.
+type EDNSet = S.Set TaggedValue -- ^ An EDN set (unordered container of unique values).
 
 -- | A \"raw\" EDN value represented as a Haskell value.
 data Value = Nil
@@ -157,7 +157,6 @@ stripTag (NoTag v) = v
 stripTag (Tagged v _ _) = v
 {-# INLINE stripTag #-}
 
-
 -- | Create an EDN 'List' from a 'Value' list wrapping them into empty tags.
 makeList :: [TaggedValue] -> Value
 makeList = List
@@ -180,8 +179,3 @@ type Pair = (Value, TaggedValue)
 makeMap :: [Pair] -> Value
 makeMap = Map . M.fromList
 {-# INLINE makeMap #-}
-
--- | Construct a 'Pair' from a key (as EDN keyword) and a value.
-(.=) :: ByteString -> TaggedValue -> Pair
-name .= value = (Keyword name, value)
-{-# INLINE (.=) #-}

@@ -16,6 +16,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 
 import qualified Data.EDN.Types as E
+import Data.EDN.Types.Class (ToEDN, toEDN)
 
 -- | Encode a Tagged EDN value to a 'Builder'.
 fromTagged :: E.TaggedValue -> Builder
@@ -86,9 +87,9 @@ fromAssoc [] = ""
 fromAssoc ((k, v):[]) = fromValue k <> singleton ' ' <> fromTagged v
 fromAssoc ((k, v):as) = fromValue k <> singleton ' ' <> fromTagged v <> singleton ' ' <> fromAssoc as
 
--- | Serialize a EDN value as a lazy 'L.ByteString'.
-encode :: E.TaggedValue -> L.ByteString
-encode = encodeUtf8 . toLazyText . fromTagged
+-- | Serialize a value as a lazy 'L.ByteString'.
+encode :: ToEDN a => a -> L.ByteString
+encode = encodeUtf8 . toLazyText . fromTagged . toEDN
 {-# INLINE encode #-}
 
 (<>) :: Builder -> Builder -> Builder

@@ -1,11 +1,19 @@
 {-# LANGUAGE OverloadedStrings, FlexibleInstances, IncoherentInstances #-}
 
 module Data.EDN.Types.Class (
-    ToEDN, FromEDN, toEDN, fromEDN, fromEDNv, (.:), (.:?)
+    -- * Type conversion
+    ToEDN(..), FromEDN(..), fromEDN, fromEDNv,
+
+    -- * EDN value decoding
+    decode, DP.parse, DP.parseEither, DP.parseMaybe, DP.Parser, DP.Result(..),
+
+    -- * Convenience functions
+    (.=), (.:), (.:?), (.!=), typeMismatch
 ) where
 
 import Control.Applicative (pure, (<$>))
 import Control.Monad (liftM, liftM2)
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Encoding as TE
@@ -16,9 +24,12 @@ import qualified Data.Vector as V
 import qualified Data.Set as S
 import qualified Data.Map as M
 
-import qualified Data.Parser as P
+import Data.Parser (Parser, Result)
+import qualified Data.Parser as DP
+import qualified Data.EDN.Parser as P
 import qualified Data.EDN.Types as E
 
+-- | A type that can be converted to JSON.
 class ToEDN a where
     toEDN :: a -> E.TaggedValue
     toEDN = E.notag . toEDNv
@@ -28,12 +39,17 @@ class ToEDN a where
     toEDNv = E.stripTag . toEDN
     {-# INLINE toEDNv #-}
 
+-- | A type that can be converted from EDN, with a possibility of failure.
+--
+-- When writing an instance, use 'empty', 'mzero', or 'fail' to make a
+-- conversion fail, e.g. if an 'M.Map' is missing a required key, or
+-- the value is of the wrong type.
 class FromEDN a where
-    parseEDN :: E.TaggedValue -> P.Parser a
+    parseEDN :: E.TaggedValue -> Parser a
     parseEDN = parseEDNv . E.stripTag
     {-# INLINE parseEDN #-}
 
-    parseEDNv :: E.Value -> P.Parser a
+    parseEDNv :: E.Value -> Parser a
     parseEDNv = parseEDN . E.notag
     {-# INLINE parseEDNv #-}
 
@@ -211,14 +227,26 @@ instance FromEDN E.TaggedValue where
     parseEDN = pure
 
 -- | Convert a value from 'E.TaggedValue', failing if the types do not match.
-fromEDN :: FromEDN a => E.TaggedValue -> P.Result a
-fromEDN = P.parse parseEDN
+fromEDN :: FromEDN a => E.TaggedValue -> Result a
+fromEDN = DP.parse parseEDN
 {-# INLINE fromEDN #-}
 
 -- | Convert a value from 'E.Value', failing if the types do not match.
-fromEDNv :: FromEDN a => E.Value -> P.Result a
-fromEDNv = P.parse parseEDNv
+fromEDNv :: FromEDN a => E.Value -> Result a
+fromEDNv = DP.parse parseEDNv
 {-# INLINE fromEDNv #-}
+
+-- | Deserializes a EDN value from a lazy 'BSL.ByteString'.
+-- If this fails to to incomplete or invalid input, 'Nothing' is returned.
+decode :: FromEDN a => BSL.ByteString -> Maybe a
+decode s = case P.parseMaybe s of
+    Just tv -> DP.parseMaybe parseEDN tv
+    Nothing -> Nothing
+
+-- | Construct a 'Pair' from a key (as EDN keyword) and a value.
+(.=) :: ToEDN a => BS.ByteString -> a -> E.Pair
+name .= value = (E.Keyword name, toEDN value)
+{-# INLINE (.=) #-}
 
 -- | Retrieve the value associated with the given key of an 'E.EDNMap'.
 -- The result is 'empty' if the key is not present or the value cannot
@@ -227,7 +255,7 @@ fromEDNv = P.parse parseEDNv
 -- This accessor is appropriate if the key and value /must/ be present
 -- in an object for it to be valid. If the key and value are
 -- optional, use '(.:?)' instead.
-(.:) :: (Show k, ToEDN k, FromEDN a) => E.EDNMap -> k -> P.Parser a
+(.:) :: (Show k, ToEDN k, FromEDN a) => E.EDNMap -> k -> Parser a
 emap .: key = case M.lookup (toEDNv key) emap of
                   Nothing -> fail $ "key " ++ show key ++ " not present"
                   Just v -> parseEDN v
@@ -240,16 +268,34 @@ emap .: key = case M.lookup (toEDNv key) emap of
 -- This accessor is most useful if the key and value can be absent
 -- from an object without affecting its validity.  If the key and
 -- value are mandatory, use '(.:)' instead.
-(.:?) :: (ToEDN k, FromEDN a) => E.EDNMap -> k -> P.Parser (Maybe a)
+(.:?) :: (ToEDN k, FromEDN a) => E.EDNMap -> k -> Parser (Maybe a)
 emap .:? key = case M.lookup (toEDNv key) emap of
                    Nothing -> pure Nothing
                    Just v -> parseEDN v
 {-# INLINE (.:?) #-}
 
+-- | Helper for use in combination with '.:?' to provide default
+-- values for optional JSON object fields.
+--
+-- This combinator is most useful if the key and value can be absent
+-- from an object without affecting its validity and we know a default
+-- value to assign in that case.  If the key and value are mandatory,
+-- use '(.:)' instead.
+-- 
+-- Example usage:
+--
+-- @ v1 <- o '.:?' \"opt_field_with_dfl\" .!= \"default_val\"
+-- v2 <- o '.:'  \"mandatory_field\"
+-- v3 <- o '.:?' \"opt_field2\"
+-- @
+(.!=) :: Parser (Maybe a) -> a -> Parser a
+pmval .!= val = fromMaybe val <$> pmval
+{-# INLINE (.!=) #-}
+
 -- | Fail parsing due to a type mismatch, with a descriptive message.
 typeMismatch :: String -- ^ The name of the type you are trying to parse.
              -> E.Value -- ^ The actual value encountered.
-             -> P.Parser a
+             -> Parser a
 typeMismatch expected actual =
     fail $ "when expecting a " ++ expected ++ ", encountered " ++ name ++
            " instead"
