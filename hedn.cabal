@@ -32,7 +32,7 @@ library
   build-depends:       base ==4.*, attoparsec, text, bytestring, containers, vector, stringsearch, mtl, deepseq
 
   if flag(developer)
-    ghc-options: -Werror
+    ghc-options: -Werror -fhpc
     ghc-prof-options: -auto-all
 
   ghc-options: -O2 -Wall -fno-warn-unused-do-bind
@@ -44,6 +44,9 @@ Test-Suite tests
   hs-source-dirs:    tests/
   build-depends:     base, hedn, HUnit, bytestring, text, containers, vector
   ghc-options:       -Wall
+
+  if flag(developer)
+    ghc-options: -Werror -fhpc
 
 source-repository head
   type:     mercurial
