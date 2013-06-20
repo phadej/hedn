@@ -64,7 +64,14 @@ parseString = do
     char '"'
 
     if '\\' `BS.elem` x
-        then return $! String . TE.decodeUtf8 . rep "\\\"" "\"". rep "\\\\" "\\" . rep "\\n" "\n" . rep "\\r" "\r" . rep "\\t" "\t" $ x
+        then return $! String .
+                       -- NOTE: There is a bug in here!
+                       TE.decodeUtf8 .
+                       rep "\\\"" "\"".
+                       rep "\\\\" "\\" .
+                       rep "\\n" "\n" .
+                       rep "\\r" "\r" .
+                       rep "\\t" "\t" $ x
         else return $! String . TE.decodeUtf8 $ x
 
     where rep f t s = BS.concat . BSL.toChunks $! replace (BS.pack f) (BS.pack t) s
@@ -119,7 +126,9 @@ parseList :: Parser Value
 parseList = do
     skipSoC
     char '('
+    A.skipSpace
     vs <- parseTagged `sepBy` spaceOrComma
+    A.skipSpace
     char ')'
     return $! List vs
 
@@ -127,7 +136,9 @@ parseVector :: Parser Value
 parseVector = do
     skipSoC
     char '['
+    A.skipSpace
     vs <- parseTagged `sepBy` spaceOrComma
+    A.skipSpace
     char ']'
     return $! makeVec vs
 
@@ -135,7 +146,9 @@ parseMap :: Parser Value
 parseMap = do
     skipSoC
     char '{'
+    A.skipSpace
     pairs <- parseAssoc `sepBy` spaceOrComma
+    A.skipSpace
     char '}'
     return $! makeMap pairs
     where
@@ -149,7 +162,9 @@ parseSet = do
     skipSoC
     char '#'
     char '{'
+    A.skipSpace
     vs <- parseTagged `sepBy` spaceOrComma
+    A.skipSpace
     char '}'
     return $! makeSet vs
 
