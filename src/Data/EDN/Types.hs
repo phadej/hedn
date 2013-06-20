@@ -36,11 +36,11 @@ import qualified Data.Vector as V
 import qualified Data.Map as M
 import qualified Data.Set as S
 
-instance NFData ByteString
+-- instance NFData BS.ByteString
 
-instance NFData BLI.ByteString where
-    rnf BLI.Empty       = ()
-    rnf (BLI.Chunk _ b) = rnf b
+-- instance NFData BLI.ByteString where
+--     rnf BLI.Empty       = ()
+--     rnf (BLI.Chunk _ b) = rnf b
 
 -- | Abstract namespaced tag.
 data Tagged a = NoTag !a
