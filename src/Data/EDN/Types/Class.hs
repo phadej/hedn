@@ -259,6 +259,146 @@ instance (Ord a, FromEDN a, FromEDN b) => FromEDN (M.Map a b) where
     parseEDNv v = typeMismatch "Map" v
     {-# INLINE parseEDNv #-}
 
+instance (ToEDN a, ToEDN b) => ToEDN (a, b) where
+    toEDNv (a, b) = E.Vec $! V.fromList [toEDN a, toEDN b]
+    {-# INLINE toEDNv #-}
+
+instance (FromEDN a, FromEDN b) => FromEDN (a, b) where
+    parseEDNv v@(E.Vec vec)
+      | (V.length vec == 2) = (,) <$> (parseEDN (vec V.! 0))
+                                  <*> (parseEDN (vec V.! 1))
+      | otherwise = typeMismatch "(a, b)" v
+    parseEDNv v = typeMismatch "(a, b)" v
+    {-# INLINE parseEDNv #-}
+
+instance (ToEDN a, ToEDN b, ToEDN c) => ToEDN (a, b, c) where
+    toEDNv (a, b, c) = E.Vec $! V.fromList [toEDN a, toEDN b, toEDN c]
+    {-# INLINE toEDNv #-}
+
+instance (FromEDN a, FromEDN b, FromEDN c) => FromEDN (a, b, c) where
+    parseEDNv v@(E.Vec vec)
+      | V.length vec == 3 = (,,) <$> (parseEDN (vec V.! 0))
+                                 <*> (parseEDN (vec V.! 1))
+                                 <*> (parseEDN (vec V.! 2))
+      | otherwise = typeMismatch "(a, b, c)" v
+    parseEDNv v = typeMismatch "(a, b, c)" v
+    {-# INLINE parseEDNv #-}
+
+instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d) => ToEDN (a, b, c, d) where
+    toEDNv (a, b, c, d) = E.Vec $! V.fromList [toEDN a, toEDN b, toEDN c, toEDN d]
+    {-# INLINE toEDNv #-}
+
+instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d) => FromEDN (a, b, c, d) where
+    parseEDNv v@(E.Vec vec)
+      | V.length vec == 4 = (,,,) <$> (parseEDN (vec V.! 0))
+                                  <*> (parseEDN (vec V.! 1))
+                                  <*> (parseEDN (vec V.! 2))
+                                  <*> (parseEDN (vec V.! 3))
+      | otherwise = typeMismatch "(a, b, c, d)" v
+    parseEDNv v = typeMismatch "(a, b, c, d)" v
+    {-# INLINE parseEDNv #-}
+
+instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d, ToEDN e) => ToEDN (a, b, c, d, e) where
+    toEDNv (a, b, c, d, e) = E.Vec $! V.fromList [
+                               toEDN a
+                             , toEDN b
+                             , toEDN c
+                             , toEDN d
+                             , toEDN e ]
+    {-# INLINE toEDNv #-}
+
+instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d, FromEDN e)
+    => FromEDN (a, b, c, d, e) where
+    parseEDNv v@(E.Vec vec)
+      | V.length vec == 5 = (,,,,) <$> (parseEDN (vec V.! 0))
+                                   <*> (parseEDN (vec V.! 1))
+                                   <*> (parseEDN (vec V.! 2))
+                                   <*> (parseEDN (vec V.! 3))
+                                   <*> (parseEDN (vec V.! 4))
+      | otherwise = typeMismatch "(a, b, c, d, e)" v
+    parseEDNv v = typeMismatch "(a, b, c, d, e)" v
+    {-# INLINE parseEDNv #-}
+
+instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d, ToEDN e, ToEDN f)
+    => ToEDN (a, b, c, d, e, f) where
+    toEDNv (a, b, c, d, e, f) = E.Vec $! V.fromList [
+                               toEDN a
+                             , toEDN b
+                             , toEDN c
+                             , toEDN d
+                             , toEDN e
+                             , toEDN f]
+    {-# INLINE toEDNv #-}
+
+instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d, FromEDN e, FromEDN f)
+    => FromEDN (a, b, c, d, e, f) where
+    parseEDNv v@(E.Vec vec)
+      | V.length vec == 6 = (,,,,,) <$> (parseEDN (vec V.! 0))
+                                    <*> (parseEDN (vec V.! 1))
+                                    <*> (parseEDN (vec V.! 2))
+                                    <*> (parseEDN (vec V.! 3))
+                                    <*> (parseEDN (vec V.! 4))
+                                    <*> (parseEDN (vec V.! 5))
+      | otherwise = typeMismatch "(a, b, c, d, e, f)" v
+    parseEDNv v = typeMismatch "(a, b, c, d, e, f)" v
+    {-# INLINE parseEDNv #-}
+
+instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d, ToEDN e, ToEDN f, ToEDN g)
+    => ToEDN (a, b, c, d, e, f, g) where
+    toEDNv (a, b, c, d, e, f, g) = E.Vec $! V.fromList [
+                               toEDN a
+                             , toEDN b
+                             , toEDN c
+                             , toEDN d
+                             , toEDN e
+                             , toEDN f
+                             , toEDN g]
+    {-# INLINE toEDNv #-}
+
+instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d, FromEDN e, FromEDN f, FromEDN g)
+    => FromEDN (a, b, c, d, e, f, g) where
+    parseEDNv v@(E.Vec vec)
+      | V.length vec == 7 = (,,,,,,) <$> (parseEDN (vec V.! 0))
+                                     <*> (parseEDN (vec V.! 1))
+                                     <*> (parseEDN (vec V.! 2))
+                                     <*> (parseEDN (vec V.! 3))
+                                     <*> (parseEDN (vec V.! 4))
+                                     <*> (parseEDN (vec V.! 5))
+                                     <*> (parseEDN (vec V.! 6))
+      | otherwise = typeMismatch "(a, b, c, d, e, f, g)" v
+    parseEDNv v = typeMismatch "(a, b, c, d, e, f, g)" v
+    {-# INLINE parseEDNv #-}
+
+instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d, ToEDN e, ToEDN f, ToEDN g, ToEDN h)
+    => ToEDN (a, b, c, d, e, f, g, h) where
+    toEDNv (a, b, c, d, e, f, g, h) = E.Vec $! V.fromList [
+                               toEDN a
+                             , toEDN b
+                             , toEDN c
+                             , toEDN d
+                             , toEDN e
+                             , toEDN f
+                             , toEDN g
+                             , toEDN h]
+    {-# INLINE toEDNv #-}
+
+instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d,
+          FromEDN e, FromEDN f, FromEDN g, FromEDN h)
+    => FromEDN (a, b, c, d, e, f, g, h) where
+    parseEDNv v@(E.Vec vec)
+      | V.length vec == 8 = (,,,,,,,) <$> (parseEDN (vec V.! 0))
+                                      <*> (parseEDN (vec V.! 1))
+                                      <*> (parseEDN (vec V.! 2))
+                                      <*> (parseEDN (vec V.! 3))
+                                      <*> (parseEDN (vec V.! 4))
+                                      <*> (parseEDN (vec V.! 5))
+                                      <*> (parseEDN (vec V.! 6))
+                                      <*> (parseEDN (vec V.! 7))
+      | otherwise = typeMismatch "(a, b, c, d, e, f, g, h)" v
+    parseEDNv v = typeMismatch "(a, b, c, d, e, f, g, h)" v
+    {-# INLINE parseEDNv #-}
+
+
 instance ToEDN E.Value where
     toEDNv = id
 
@@ -326,7 +466,7 @@ emap .:? key = case M.lookup (toEDNv key) emap of
 -- from an object without affecting its validity and we know a default
 -- value to assign in that case.  If the key and value are mandatory,
 -- use '(.:)' instead.
--- 
+--
 -- Example usage:
 --
 -- @ v1 <- o '.:?' \"opt_field_with_dfl\" .!= \"default_val\"
@@ -363,6 +503,7 @@ mapMset :: (Monad m, Ord b) => (a -> m b) -> S.Set a -> m (S.Set b)
 mapMset f s = mapM f (S.toList s) >>= return . S.fromList
 {-# INLINE mapMset #-}
 
-mapMmap :: (Ord a2, Monad m) => (a1 -> m a2) -> (b1 -> m b2) -> M.Map a1 b1 -> m (M.Map a2 b2)
+mapMmap :: (Ord a2, Monad m)
+        => (a1 -> m a2) -> (b1 -> m b2) -> M.Map a1 b1 -> m (M.Map a2 b2)
 mapMmap kf vf = liftM M.fromList . mapM (\(k, v) -> liftM2 (,) (kf k) (vf v)) . M.assocs
 {-# INLINE mapMmap #-}
