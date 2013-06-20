@@ -1,5 +1,6 @@
-{-# LANGUAGE OverloadedStrings, FlexibleInstances, IncoherentInstances #-}
-
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE IncoherentInstances #-}
+{-# LANGUAGE OverloadedStrings   #-}
 module Data.EDN.Types.Class (
     -- * Type conversion
     ToEDN(..), FromEDN(..), fromEDN, fromEDNv,
@@ -11,23 +12,27 @@ module Data.EDN.Types.Class (
     (.=), (.:), (.:?), (.!=), typeMismatch
 ) where
 
-import Control.Applicative (pure, (<$>))
-import Control.Monad (liftM, liftM2)
-import Data.Maybe (fromMaybe)
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Encoding as TE
-import qualified Data.Text.Lazy.Encoding as TLE
-import qualified Data.ByteString.Char8 as BS
+import           Control.Applicative        (pure, (<$>), (<*>))
+import           Control.Monad              (liftM, liftM2)
+import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
-import qualified Data.Vector as V
-import qualified Data.Set as S
-import qualified Data.Map as M
+import qualified Data.Map                   as M
+import           Data.Maybe                 (fromMaybe)
+import           Data.Monoid                (First (..), mconcat)
+import qualified Data.Set                   as S
+import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as TE
+import qualified Data.Text.Lazy             as TL
+import qualified Data.Text.Lazy.Encoding    as TLE
+import           Data.Time.Clock            (UTCTime)
+import           Data.Time.Format           (formatTime, parseTime)
+import qualified Data.Vector                as V
 
-import Data.Parser (Parser, Result)
-import qualified Data.Parser as DP
-import qualified Data.EDN.Parser as P
-import qualified Data.EDN.Types as E
+import qualified Data.EDN.Parser            as P
+import qualified Data.EDN.Types             as E
+import           Data.Parser                (Parser, Result)
+import qualified Data.Parser                as DP
+import           System.Locale              (defaultTimeLocale)
 
 -- | A type that can be converted to JSON.
 class ToEDN a where
@@ -177,6 +182,46 @@ instance FromEDN Integer where
     parseEDNv (E.Integer i) = pure i
     parseEDNv v = typeMismatch "Integer" v
     {-# INLINE parseEDNv #-}
+
+instance ToEDN Int where
+    toEDNv = E.Integer . fromIntegral
+    {-# INLINE toEDNv #-}
+
+instance FromEDN Int where
+    parseEDNv (E.Integer i) = return (fromIntegral i)
+    parseEDNv v = typeMismatch "Int" v
+
+
+showRFC3339 :: UTCTime -> String
+showRFC3339 time =
+    concat [fm "%FT%T." time
+           ,  take 3 $ fm "%-q" time
+           ,  "+00:00"]
+  where
+    fm s = formatTime defaultTimeLocale s
+
+instance ToEDN UTCTime where
+    toEDN time = E.Tagged (E.String . T.pack $ showRFC3339 time)
+                          ""
+                          "inst"
+    {-# INLINE toEDN #-}
+
+instance FromEDN UTCTime where
+    parseEDN val@(E.Tagged (E.String ts) "" "inst") = do
+        let result = getFirst . mconcat $ map (First . parseTime') validRFC3339
+        case result of
+          Just time -> return time
+          Nothing -> typeMismatch "UTCTime" $ E.stripTag val
+      where
+        tsStr = T.unpack ts
+        parseTime' fmt = parseTime defaultTimeLocale fmt tsStr
+        validRFC3339 = [ "%FT%T%Q%z"
+                       , "%FT%T%QZ"
+                       , "%FT%T%z"
+                       , "%FT%TZ" ]
+    parseEDN v = typeMismatch "UTCTime" $ E.stripTag v
+    {-# INLINE parseEDN #-}
+
 
 instance ToEDN a => ToEDN [a] where
     toEDNv = E.List . map toEDN
