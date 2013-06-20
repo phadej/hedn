@@ -10,20 +10,22 @@ module Data.EDN.Parser (
     parseValue, parseTagged
 ) where
 
-import Prelude hiding (String, takeWhile)
-import Data.Attoparsec.Char8 as A
-import qualified Data.Attoparsec.Lazy as AL
-import Data.Attoparsec.Combinator()
-import Control.Applicative (pure, (<|>), (*>))
-import qualified Data.ByteString.Char8 as BS
+import           Control.Applicative        (pure, (*>), (<|>))
+import           Data.Attoparsec.Char8      as A
+import           Data.Attoparsec.Combinator ()
+import qualified Data.Attoparsec.Lazy       as AL
+import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
-import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Encoding as TLE
-import Data.ByteString.Search (replace)
+import           Data.ByteString.Search     (replace)
+import qualified Data.Text                  as T
+import qualified Data.Text.Encoding         as TE
+import qualified Data.Text.Lazy             as TL
+import qualified Data.Text.Lazy.Encoding    as TLE
+import           Prelude                    hiding (String, takeWhile)
 
-import Data.EDN.Types (Value(..), Tagged(..), TaggedValue, makeVec, makeMap, makeSet)
+import           Data.EDN.Types             (Tagged (..), TaggedValue,
+                                             Value (..), makeMap, makeSet,
+                                             makeVec)
 
 isSpaceOrComma :: Char -> Bool
 isSpaceOrComma ' ' = True
