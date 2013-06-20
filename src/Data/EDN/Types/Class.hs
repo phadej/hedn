@@ -64,8 +64,8 @@ instance (ToEDN a) => ToEDN (Maybe a) where
     {-# INLINE toEDN #-}
 
 instance (FromEDN a) => (FromEDN (Maybe a)) where
-    parseEDNv E.Nil = pure Nothing
-    parseEDNv a = Just <$> parseEDNv a
+    parseEDN (E.NoTag E.Nil) = pure Nothing
+    parseEDN a = Just <$> parseEDN a
     {-# INLINE parseEDNv #-}
 
 instance (ToEDN a, ToEDN b) => ToEDN (Either a b) where
