@@ -66,14 +66,14 @@ parseString = do
     char '"'
 
     if '\\' `BS.elem` x
-        then return $! String .
-                       -- NOTE: There is a bug in here!
-                       TE.decodeUtf8 .
-                       rep "\\\"" "\"".
-                       rep "\\\\" "\\" .
-                       rep "\\n" "\n" .
-                       rep "\\r" "\r" .
-                       rep "\\t" "\t" $ x
+        then return $! String
+                     . TE.decodeUtf8
+                     . rep "\\\"" "\""
+                     . rep "\\\\" "\\"
+                     . rep "\\n" "\n"
+                     . rep "\\r" "\r"
+                     . rep "\\t" "\t"
+                     $ x
         else return $! String . TE.decodeUtf8 $ x
 
     where rep f t s = BS.concat . BSL.toChunks $! replace (BS.pack f) (BS.pack t) s
