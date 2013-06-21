@@ -499,11 +499,17 @@ typeMismatch expected actual =
         E.Map _ -> "Map"
         E.Set _ -> "Set"
 
-mapMset :: (Monad m, Ord b) => (a -> m b) -> S.Set a -> m (S.Set b)
+mapMset :: (Monad m, Ord b)
+        => (a -> m b)
+        -> S.Set a
+        -> m (S.Set b)
 mapMset f s = mapM f (S.toList s) >>= return . S.fromList
 {-# INLINE mapMset #-}
 
 mapMmap :: (Ord a2, Monad m)
-        => (a1 -> m a2) -> (b1 -> m b2) -> M.Map a1 b1 -> m (M.Map a2 b2)
+        => (a1 -> m a2)
+        -> (b1 -> m b2)
+        -> M.Map a1 b1
+        -> m (M.Map a2 b2)
 mapMmap kf vf = liftM M.fromList . mapM (\(k, v) -> liftM2 (,) (kf k) (vf v)) . M.assocs
 {-# INLINE mapMmap #-}
