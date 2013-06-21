@@ -1,5 +1,4 @@
 {-# LANGUAGE FlexibleInstances #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Data.EDN.Types (
     -- * Types
@@ -31,16 +30,9 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Char8 as BS
-import qualified Data.ByteString.Lazy.Internal as BLI
 import qualified Data.Vector as V
 import qualified Data.Map as M
 import qualified Data.Set as S
-
--- instance NFData BS.ByteString
-
--- instance NFData BLI.ByteString where
---     rnf BLI.Empty       = ()
---     rnf (BLI.Chunk _ b) = rnf b
 
 -- | Abstract namespaced tag.
 data Tagged a = NoTag !a
