@@ -5,7 +5,7 @@
 
 module Data.EDN.Parser (
     -- * Data parsers
-    parseMaybe, parseBSL, parseBS, parseT, parseTL, parseS,
+    parseMaybe, parseEither, parseBSL, parseBS, parseT, parseTL, parseS,
     -- * Attoparsec implementation
     parseValue, parseTagged
 ) where
@@ -26,6 +26,7 @@ import           Prelude                    hiding (String, takeWhile)
 import           Data.EDN.Types             (Tagged (..), TaggedValue,
                                              Value (..), makeMap, makeSet,
                                              makeVec)
+import qualified Prelude as P
 
 isSpaceOrComma :: Char -> Bool
 isSpaceOrComma ' ' = True
@@ -221,9 +222,11 @@ parseTagged = do
 
 -- | Parse a lazy 'BSL.ByteString' into a 'TaggedValue'. If fails due to incomplete or invalid input, 'Nothing' is returned.
 parseMaybe :: BSL.ByteString -> Maybe TaggedValue
-parseMaybe src = case parseBSL src of
-    AL.Done _ r -> Just r
-    _           -> Nothing
+parseMaybe = AL.maybeResult . parseBSL
+
+-- | Parse a lazy 'BSL.ByteString' into a 'TaggedValue'. If fails due to incomplete or invalid input, 'Left' is returned with the error message.
+parseEither :: BSL.ByteString -> Either P.String TaggedValue
+parseEither = AL.eitherResult . parseBSL
 
 -- | Parse a lazy 'BSL.ByteString'.
 parseBSL :: BSL.ByteString -> AL.Result TaggedValue
