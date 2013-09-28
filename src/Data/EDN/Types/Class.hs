@@ -228,6 +228,7 @@ instance ToEDN a => ToEDN [a] where
     {-# INLINE toEDNv #-}
 
 instance FromEDN a => FromEDN [a] where
+    parseEDNv (E.Vec vs) = V.mapM parseEDN vs >>= return . V.toList
     parseEDNv (E.List vs) = mapM parseEDN vs
     parseEDNv v = typeMismatch "List" v
     {-# INLINE parseEDNv #-}

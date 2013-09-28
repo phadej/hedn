@@ -218,7 +218,12 @@ fromEDNcases = [ FromEDNCase "nil" (Nothing :: Maybe Bool)
                , FromEDNCase "42" (42 :: Integer)
                , FromEDNCase "-3.14" (-3.14 :: Double)
 
+               , FromEDNCase "([1 2] [3 4])" ([(1,2), (3,4)]:: [(Int,Int)])
+               , FromEDNCase "((1 2) (3 4))" ([[1,2], [3,4]]:: [[Int]])
+               , FromEDNCase "[[1 2] [3 4]]" ([(1,2), (3,4)]:: [(Int, Int)])
+               , FromEDNCase "[[1 2] [3 4]]" ([[1,2], [3,4]]:: [[Int]])
                , FromEDNCase "(hello world)" (["hello", "world"] :: [String])
+
                , FromEDNCase "[3 2 1 \"Kaboom!\"]" $ E.makeVec [E.integer 3, E.integer 2, E.integer 1, "Kaboom!"]
                , FromEDNCase "#{a/bag :of \"bugs\"}" $ E.makeSet [E.symbolNS "a" "bag", E.keyword "of", E.string "bugs"]
                , FromEDNCase "{json: \"like\", but/not: \"really\"}" $ (M.fromList [("json:", "like"), ("but/not:", "really")] :: M.Map String String)
