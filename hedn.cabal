@@ -1,5 +1,5 @@
 name:                hedn
-version:             0.1.7.0
+version:             0.1.8.0
 synopsis:            EDN parsing and encoding
 homepage:            https://bitbucket.org/dpwiz/hedn
 license:             BSD3
@@ -17,6 +17,8 @@ description:
 
 extra-source-files:
   tests/Main.hs
+  tests/Data/EDN/Test/*.hs
+  tests/Data/EDN/Test/QuickCheck/TH.hs
 
 flag developer
   description: operate in developer mode
@@ -60,7 +62,6 @@ Test-Suite tests
   build-depends:     base, hedn, bytestring, text, containers, vector, template-haskell, time,
                      QuickCheck >= 2.5.1, hspec == 1.5.*, HUnit >= 1.2.5
   ghc-options:       -Wall
-
   if flag(developer)
     ghc-options: -Werror -fhpc
 
