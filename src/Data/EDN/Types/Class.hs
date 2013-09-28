@@ -6,7 +6,7 @@ module Data.EDN.Types.Class (
     ToEDN(..), FromEDN(..), fromEDN, fromEDNv,
 
     -- * EDN value decoding
-    decode, decodeEither, DP.parse, DP.parseEither, DP.parseMaybe, DP.Parser, DP.Result(..),
+    decode, eitherDecode, DP.parse, DP.parseEither, DP.parseMaybe, DP.Parser, DP.Result(..),
 
     -- * Convenience functions
     (.=), (.:), (.:?), (.!=), typeMismatch
@@ -432,8 +432,8 @@ decode s = case P.parseMaybe s of
 -- | Deserializes a EDN value from a lazy 'BSL.ByteString'.
 -- If this fails to to incomplete or invalid input, 'Left' is returned
 -- with an error message.
-decodeEither :: FromEDN a => BSL.ByteString -> Either String a
-decodeEither s = case P.parseEither s of
+eitherDecode :: FromEDN a => BSL.ByteString -> Either String a
+eitherDecode s = case P.parseEither s of
    Right tv -> DP.parseEither parseEDN tv
    Left e -> Left e
 
