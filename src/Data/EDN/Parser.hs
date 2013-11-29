@@ -14,6 +14,7 @@ import           Control.Applicative        (pure, (*>), (<|>))
 import           Data.Attoparsec.Char8      as A
 import           Data.Attoparsec.Combinator ()
 import qualified Data.Attoparsec.Lazy       as AL
+import qualified Data.ByteString.UTF8       as UTF8
 import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import           Data.ByteString.Search     (replace)
@@ -83,13 +84,41 @@ parseCharacter :: Parser Value
 parseCharacter = do
     skipSoC
     char '\\'
-    x <- string "newline" <|> string "space" <|> string "tab" <|> A.take 1
-    return . Character $! case x of
-                              "newline" -> '\n'
-                              "return" -> '\r'
-                              "space" -> ' '
-                              "tab" -> '\t'
-                              _ -> BS.head x
+    simple <|> anyCharUtf8
+
+    where
+        simple :: Parser Value
+        simple = do
+            x <- string "newline"
+             <|> string "return"
+             <|> string "space"
+             <|> string "tab"
+             <|> string "\\"
+
+            return . Character $! case x of
+              "newline" -> '\n'
+              "return" -> '\r'
+              "space" -> ' '
+              "tab" -> '\t'
+              "\\" -> '\\'
+              _ -> error ("EDN.parseCharacter: impossible - simple" ++ show x)
+
+        anyCharUtf8 :: Parser Value
+        anyCharUtf8 = do
+            bs <- scan BS.empty go
+            case UTF8.decode bs of
+                Just (c, _) -> return $! Character c
+                Nothing     -> error $ "EDN.parseCharacter: bad utf8 data? " ++ show bs
+
+        err = UTF8.replacement_char :: Char
+
+    	go :: BS.ByteString -> Char -> Maybe BS.ByteString
+        go s c
+            | BS.null s = Just (BS.singleton c)
+            | otherwise = case UTF8.decode s of
+                              Nothing                         -> Just (s `BS.snoc` c)
+                              Just (err, _) -> Just (s `BS.snoc` c)
+                              Just _                          -> Nothing
 
 parseSymbol :: Parser Value
 parseSymbol = do
