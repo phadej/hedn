@@ -110,15 +110,14 @@ parseCharacter = do
                 Just (c, _) -> return $! Character c
                 Nothing     -> error $ "EDN.parseCharacter: bad utf8 data? " ++ show bs
 
-        err = UTF8.replacement_char :: Char
-
     	go :: BS.ByteString -> Char -> Maybe BS.ByteString
         go s c
             | BS.null s = Just (BS.singleton c)
             | otherwise = case UTF8.decode s of
-                              Nothing                         -> Just (s `BS.snoc` c)
-                              Just (err, _) -> Just (s `BS.snoc` c)
-                              Just _                          -> Nothing
+                              Nothing      -> Just (s `BS.snoc` c)
+                              Just (uc, _) -> if uc == UTF8.replacement_char
+                                                  then Just (s `BS.snoc` c)
+                                                  else Nothing
 
 parseSymbol :: Parser Value
 parseSymbol = do
