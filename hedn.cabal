@@ -1,5 +1,5 @@
 name:                hedn
-version:             0.1.8.0
+version:             0.1.8.1
 synopsis:            EDN parsing and encoding
 homepage:            https://bitbucket.org/dpwiz/hedn
 license:             BSD3
@@ -41,6 +41,7 @@ library
       attoparsec,
       text,
       bytestring >=0.10,
+      utf8-string,
       containers,
       vector,
       stringsearch,
