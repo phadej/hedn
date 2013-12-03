@@ -51,8 +51,8 @@ library
       time
 
   if flag(developer)
-    ghc-options: -Werror -fhpc
-    ghc-prof-options: -auto-all
+    ghc-options: -Werror
+    ghc-prof-options: -auto-all -fhpc
 
   ghc-options: -O2 -Wall -fno-warn-unused-do-bind
 
