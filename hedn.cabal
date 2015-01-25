@@ -67,5 +67,5 @@ Test-Suite tests
     ghc-options: -Werror -fhpc
 
 source-repository head
-  type:     mercurial
+  type:     git
   location: https://bitbucket.org/dpwiz/hedn
