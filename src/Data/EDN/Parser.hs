@@ -10,32 +10,34 @@ module Data.EDN.Parser (
     parseValue, parseTagged
 ) where
 
-import           Control.Applicative        (pure, (*>), (<|>))
-import           Data.Attoparsec.Char8      as A
-import           Data.Attoparsec.Combinator ()
-import qualified Data.Attoparsec.Lazy       as AL
-import qualified Data.ByteString.UTF8       as UTF8
-import qualified Data.ByteString.Char8      as BS
-import qualified Data.ByteString.Lazy.Char8 as BSL
-import           Data.ByteString.Search     (replace)
-import qualified Data.Text                  as T
-import qualified Data.Text.Encoding         as TE
-import qualified Data.Text.Lazy             as TL
-import qualified Data.Text.Lazy.Encoding    as TLE
-import           Prelude                    hiding (String, takeWhile)
+import           Control.Applicative              ((<|>))
+import           Data.Attoparsec.ByteString.Char8 as A
+import           Data.Attoparsec.Combinator       ()
+import qualified Data.Attoparsec.Lazy             as AL
+import qualified Data.ByteString.Char8            as BS
+import qualified Data.ByteString.Lazy.Char8       as BSL
+import           Data.ByteString.Search           (replace)
+import qualified Data.ByteString.UTF8             as UTF8
+import           Data.Maybe                       (fromJust)
+import           Data.Scientific                  as Sci
+import qualified Data.Text                        as T
+import qualified Data.Text.Encoding               as TE
+import qualified Data.Text.Lazy                   as TL
+import qualified Data.Text.Lazy.Encoding          as TLE
+import           Prelude                          hiding (String, takeWhile)
 
-import           Data.EDN.Types             (Tagged (..), TaggedValue,
-                                             Value (..), makeMap, makeSet,
-                                             makeVec)
-import qualified Prelude as P
+import           Data.EDN.Types                   (Tagged (..), TaggedValue,
+                                                   Value (..), makeMap, makeSet,
+                                                   makeVec)
+import qualified Prelude                          as P
 
 isSpaceOrComma :: Char -> Bool
-isSpaceOrComma ' ' = True
+isSpaceOrComma ' '  = True
 isSpaceOrComma '\r' = True
 isSpaceOrComma '\n' = True
 isSpaceOrComma '\t' = True
-isSpaceOrComma ',' = True
-isSpaceOrComma _ = False
+isSpaceOrComma ','  = True
+isSpaceOrComma _    = False
 
 spaceOrComma :: Parser Char
 spaceOrComma = satisfy isSpaceOrComma <?> "space/comma"
@@ -52,7 +54,7 @@ parseNil = do
 parseBool :: Parser Value
 parseBool = do
     skipSoC
-    choice [ string "true" *> pure (Boolean True)
+    choice [ string "true"  *> pure (Boolean True)
            , string "false" *> pure (Boolean False)
            ]
 
@@ -61,24 +63,26 @@ parseString = do
     skipSoC
     char '"'
 
-    x <- A.scan False $ \s c -> if s then Just False
-                                     else if c == '"'
-                                          then Nothing
-                                          else Just (c == '\\')
+    x <- A.scan False $ \s c -> if s
+                                then Just False
+                                else if c == '"'
+                                     then Nothing
+                                     else Just (c == '\\')
     char '"'
 
-    if '\\' `BS.elem` x
-        then return $! String
-                     . TE.decodeUtf8
-                     . rep "\\\"" "\""
-                     . rep "\\\\" "\\"
-                     . rep "\\n" "\n"
-                     . rep "\\r" "\r"
-                     . rep "\\t" "\t"
-                     $ x
-        else return $! String . TE.decodeUtf8 $ x
+    let prepare = if '\\' `BS.elem` x
+                  then rep "\\\"" "\""
+                       . rep "\\\\" "\\"
+                       . rep "\\n" "\n"
+                       . rep "\\r" "\r"
+                       . rep "\\t" "\t"
+                  else id
 
-    where rep f t s = BS.concat . BSL.toChunks $! replace (BS.pack f) (BS.pack t) s
+    return $! String $ TE.decodeUtf8 $ prepare x
+
+    where
+        rep f t s = BS.concat . BSL.toChunks
+                    $! replace (BS.pack f) (BS.pack t) s
 
 parseCharacter :: Parser Value
 parseCharacter = do
@@ -110,7 +114,7 @@ parseCharacter = do
                 Just (c, _) -> return $! Character c
                 Nothing     -> error $ "EDN.parseCharacter: bad utf8 data? " ++ show bs
 
-    	go :: BS.ByteString -> Char -> Maybe BS.ByteString
+        go :: BS.ByteString -> Char -> Maybe BS.ByteString
         go s c
             | BS.null s = Just (BS.singleton c)
             | otherwise = case UTF8.decode s of
@@ -141,66 +145,58 @@ parseKeyword :: Parser Value
 parseKeyword = do
     skipSoC
     char ':'
-    c <- satisfy (inClass "a-zA-Z.*/!?$%&=+_-")
+    c <- satisfy   (inClass "a-zA-Z.*/!?$%&=+_-")
     x <- takeWhile (inClass "a-zA-Z0-9#:.*/!?$%&=+_-")
     return $! Keyword (c `BS.cons` x)
 
 parseNumber :: Parser Value
 parseNumber = do
     skipSoC
-    n <- number
-    case n of
-        I i -> return $! Integer i
-        D d -> return $! Floating d
+    n <- A.scientific
+    return $!
+        if Sci.isInteger n
+        then Integer  (fromIntegral (fromJust (Sci.toBoundedInteger n) :: P.Int))
+        else Floating (Sci.toRealFloat n)
+
+
+parseColl :: Parser t1       -- opening bracket
+          -> Parser t2       -- closing bracket
+          -> Parser a        -- item parser
+          -> ([a] -> Value)  -- Value constructor
+          -> Parser Value
+parseColl openingBr closingBr item construct = do
+    skipSoC
+    _ <- openingBr
+    A.skipSpace
+    vs <- item `sepBy` spaceOrComma
+    A.skipSpace
+    _<- closingBr
+    return $! construct vs
 
 parseList :: Parser Value
-parseList = do
-    skipSoC
-    char '('
-    A.skipSpace
-    vs <- parseTagged `sepBy` spaceOrComma
-    A.skipSpace
-    char ')'
-    return $! List vs
+parseList =
+    parseColl (char '(') (char ')') parseTagged List
 
 parseVector :: Parser Value
-parseVector = do
-    skipSoC
-    char '['
-    A.skipSpace
-    vs <- parseTagged `sepBy` spaceOrComma
-    A.skipSpace
-    char ']'
-    return $! makeVec vs
+parseVector =
+    parseColl (char '[') (char ']') parseTagged makeVec
+
+parseSet :: Parser Value
+parseSet =
+    parseColl (char '#' *> char '{') (char '}') parseTagged makeSet
 
 parseMap :: Parser Value
-parseMap = do
-    skipSoC
-    char '{'
-    A.skipSpace
-    pairs <- parseAssoc `sepBy` spaceOrComma
-    A.skipSpace
-    char '}'
-    return $! makeMap pairs
+parseMap =
+    parseColl (char '{') (char '}') parseAssoc makeMap
     where
         parseAssoc = do
             key <- parseValue
             val <- parseTagged
             return (key, val)
 
-parseSet :: Parser Value
-parseSet = do
-    skipSoC
-    char '#'
-    char '{'
-    A.skipSpace
-    vs <- parseTagged `sepBy` spaceOrComma
-    A.skipSpace
-    char '}'
-    return $! makeSet vs
 
 skipComment :: Parser ()
-skipComment = skipSoC >> char ';' >> skipWhile (/= '\n')
+skipComment = skipSoC *> char ';' *> skipWhile (/= '\n')
 
 parseDiscard :: Parser ()
 parseDiscard = do
@@ -232,27 +228,34 @@ parseTagged = do
     where
         withNS = do
             char '#'
-            ns <- takeWhile1 (inClass "a-zA-Z0-9-")
+            ns <- parseIdent
             char '/'
-            tag <- takeWhile1 (inClass "a-zA-Z0-9-")
+            tag <- parseIdent
             value <- parseValue
             return $! Tagged value ns tag
 
         withoutNS = do
             char '#'
-            tag <- takeWhile1 (inClass "a-zA-Z0-9-")
+            tag <- parseIdent
             value <- parseValue
             return $! Tagged value "" tag
+
+        parseIdent = takeWhile1 (inClass "a-zA-Z0-9-")
 
         noTag = do
             value <- parseValue
             return $! NoTag value
 
--- | Parse a lazy 'BSL.ByteString' into a 'TaggedValue'. If fails due to incomplete or invalid input, 'Nothing' is returned.
+{- | Parse a lazy 'BSL.ByteString' into a 'TaggedValue'.
+If fails due to incomplete or invalid input, 'Nothing' is returned.
+-}
 parseMaybe :: BSL.ByteString -> Maybe TaggedValue
 parseMaybe = AL.maybeResult . parseBSL
 
--- | Parse a lazy 'BSL.ByteString' into a 'TaggedValue'. If fails due to incomplete or invalid input, 'Left' is returned with the error message.
+{- | Parse a lazy 'BSL.ByteString' into a 'TaggedValue'.
+If fails due to incomplete or invalid input,
+'Left' is returned with the error message.
+-}
 parseEither :: BSL.ByteString -> Either P.String TaggedValue
 parseEither = AL.eitherResult . parseBSL
 
@@ -277,6 +280,6 @@ parseT = parseBS . TE.encodeUtf8
 {-# INLINE parseT #-}
 
 -- | Parse a string AKA '[Char]'. Not really useful other than for debugging purposes.
-parseS :: [Char] -> AL.Result TaggedValue
+parseS :: P.String -> AL.Result TaggedValue
 parseS = parseBSL . BSL.pack
 {-# INLINE parseS #-}

@@ -12,27 +12,26 @@ module Data.EDN.Types.Class (
     (.=), (.:), (.:?), (.!=), typeMismatch
 ) where
 
-import           Control.Applicative        (pure, (<$>), (<*>))
 import           Control.Monad              (liftM, liftM2)
 import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
 import qualified Data.Map                   as M
 import           Data.Maybe                 (fromMaybe)
-import           Data.Monoid                (First (..), mconcat)
+import           Data.Monoid                (First (..))
 import qualified Data.Set                   as S
 import qualified Data.Text                  as T
 import qualified Data.Text.Encoding         as TE
 import qualified Data.Text.Lazy             as TL
 import qualified Data.Text.Lazy.Encoding    as TLE
 import           Data.Time.Clock            (UTCTime)
-import           Data.Time.Format           (formatTime, parseTime)
+import           Data.Time.Format           (defaultTimeLocale, formatTime,
+                                             parseTimeM)
 import qualified Data.Vector                as V
 
 import qualified Data.EDN.Parser            as P
 import qualified Data.EDN.Types             as E
 import           Data.Parser                (Parser, Result)
 import qualified Data.Parser                as DP
-import           System.Locale              (defaultTimeLocale)
 
 -- | A type that can be converted to JSON.
 class ToEDN a where
@@ -76,7 +75,7 @@ instance (ToEDN a, ToEDN b) => ToEDN (Either a b) where
 instance (FromEDN a, FromEDN b) => FromEDN (Either a b) where
     parseEDN (E.Tagged v "either" "left") = Left <$> parseEDNv v
     parseEDN (E.Tagged v "either" "right") = Right <$> parseEDNv v
-    parseEDN (E.Tagged _ _ _) = fail "incorrect tag"
+    parseEDN (E.Tagged {}) = fail "incorrect tag"
     parseEDN (E.NoTag _) = fail "no tag"
     {-# INLINE parseEDN #-}
 
@@ -161,7 +160,7 @@ instance ToEDN Char where
     {-# INLINE toEDNv #-}
 
 instance FromEDN Char where
-    parseEDNv (E.Character c) = pure $ c
+    parseEDNv (E.Character c) = pure c
     parseEDNv v = typeMismatch "Character" v
     {-# INLINE parseEDNv #-}
 
@@ -198,7 +197,7 @@ showRFC3339 time =
            ,  take 3 $ fm "%-q" time
            ,  "+00:00"]
   where
-    fm s = formatTime defaultTimeLocale s
+    fm = formatTime defaultTimeLocale
 
 instance ToEDN UTCTime where
     toEDN time = E.Tagged (E.String . T.pack $ showRFC3339 time)
@@ -214,7 +213,7 @@ instance FromEDN UTCTime where
           Nothing -> typeMismatch "UTCTime" $ E.stripTag val
       where
         tsStr = T.unpack ts
-        parseTime' fmt = parseTime defaultTimeLocale fmt tsStr
+        parseTime' fmt = parseTimeM True defaultTimeLocale fmt tsStr
         validRFC3339 = [ "%FT%T%Q%z"
                        , "%FT%T%QZ"
                        , "%FT%T%z"
@@ -228,7 +227,7 @@ instance ToEDN a => ToEDN [a] where
     {-# INLINE toEDNv #-}
 
 instance FromEDN a => FromEDN [a] where
-    parseEDNv (E.Vec vs) = V.mapM parseEDN vs >>= return . V.toList
+    parseEDNv (E.Vec vs) = V.toList <$> V.mapM parseEDN vs
     parseEDNv (E.List vs) = mapM parseEDN vs
     parseEDNv v = typeMismatch "List" v
     {-# INLINE parseEDNv #-}
@@ -266,8 +265,8 @@ instance (ToEDN a, ToEDN b) => ToEDN (a, b) where
 
 instance (FromEDN a, FromEDN b) => FromEDN (a, b) where
     parseEDNv v@(E.Vec vec)
-      | (V.length vec == 2) = (,) <$> (parseEDN (vec V.! 0))
-                                  <*> (parseEDN (vec V.! 1))
+      | V.length vec == 2 = (,) <$> parseEDN (vec V.! 0)
+                                <*> parseEDN (vec V.! 1)
       | otherwise = typeMismatch "(a, b)" v
     parseEDNv v = typeMismatch "(a, b)" v
     {-# INLINE parseEDNv #-}
@@ -278,9 +277,9 @@ instance (ToEDN a, ToEDN b, ToEDN c) => ToEDN (a, b, c) where
 
 instance (FromEDN a, FromEDN b, FromEDN c) => FromEDN (a, b, c) where
     parseEDNv v@(E.Vec vec)
-      | V.length vec == 3 = (,,) <$> (parseEDN (vec V.! 0))
-                                 <*> (parseEDN (vec V.! 1))
-                                 <*> (parseEDN (vec V.! 2))
+      | V.length vec == 3 = (,,) <$> parseEDN (vec V.! 0)
+                                 <*> parseEDN (vec V.! 1)
+                                 <*> parseEDN (vec V.! 2)
       | otherwise = typeMismatch "(a, b, c)" v
     parseEDNv v = typeMismatch "(a, b, c)" v
     {-# INLINE parseEDNv #-}
@@ -291,10 +290,10 @@ instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d) => ToEDN (a, b, c, d) where
 
 instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d) => FromEDN (a, b, c, d) where
     parseEDNv v@(E.Vec vec)
-      | V.length vec == 4 = (,,,) <$> (parseEDN (vec V.! 0))
-                                  <*> (parseEDN (vec V.! 1))
-                                  <*> (parseEDN (vec V.! 2))
-                                  <*> (parseEDN (vec V.! 3))
+      | V.length vec == 4 = (,,,) <$> parseEDN (vec V.! 0)
+                                  <*> parseEDN (vec V.! 1)
+                                  <*> parseEDN (vec V.! 2)
+                                  <*> parseEDN (vec V.! 3)
       | otherwise = typeMismatch "(a, b, c, d)" v
     parseEDNv v = typeMismatch "(a, b, c, d)" v
     {-# INLINE parseEDNv #-}
@@ -311,11 +310,11 @@ instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d, ToEDN e) => ToEDN (a, b, c, d, e) 
 instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d, FromEDN e)
     => FromEDN (a, b, c, d, e) where
     parseEDNv v@(E.Vec vec)
-      | V.length vec == 5 = (,,,,) <$> (parseEDN (vec V.! 0))
-                                   <*> (parseEDN (vec V.! 1))
-                                   <*> (parseEDN (vec V.! 2))
-                                   <*> (parseEDN (vec V.! 3))
-                                   <*> (parseEDN (vec V.! 4))
+      | V.length vec == 5 = (,,,,) <$> parseEDN (vec V.! 0)
+                                   <*> parseEDN (vec V.! 1)
+                                   <*> parseEDN (vec V.! 2)
+                                   <*> parseEDN (vec V.! 3)
+                                   <*> parseEDN (vec V.! 4)
       | otherwise = typeMismatch "(a, b, c, d, e)" v
     parseEDNv v = typeMismatch "(a, b, c, d, e)" v
     {-# INLINE parseEDNv #-}
@@ -334,67 +333,67 @@ instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d, ToEDN e, ToEDN f)
 instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d, FromEDN e, FromEDN f)
     => FromEDN (a, b, c, d, e, f) where
     parseEDNv v@(E.Vec vec)
-      | V.length vec == 6 = (,,,,,) <$> (parseEDN (vec V.! 0))
-                                    <*> (parseEDN (vec V.! 1))
-                                    <*> (parseEDN (vec V.! 2))
-                                    <*> (parseEDN (vec V.! 3))
-                                    <*> (parseEDN (vec V.! 4))
-                                    <*> (parseEDN (vec V.! 5))
+      | V.length vec == 6 = (,,,,,) <$> parseEDN (vec V.! 0)
+                                    <*> parseEDN (vec V.! 1)
+                                    <*> parseEDN (vec V.! 2)
+                                    <*> parseEDN (vec V.! 3)
+                                    <*> parseEDN (vec V.! 4)
+                                    <*> parseEDN (vec V.! 5)
       | otherwise = typeMismatch "(a, b, c, d, e, f)" v
     parseEDNv v = typeMismatch "(a, b, c, d, e, f)" v
     {-# INLINE parseEDNv #-}
 
 instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d, ToEDN e, ToEDN f, ToEDN g)
     => ToEDN (a, b, c, d, e, f, g) where
-    toEDNv (a, b, c, d, e, f, g) = E.Vec $! V.fromList [
-                               toEDN a
-                             , toEDN b
-                             , toEDN c
-                             , toEDN d
-                             , toEDN e
-                             , toEDN f
-                             , toEDN g]
+    toEDNv (a, b, c, d, e, f, g) =
+        E.Vec $! V.fromList [ toEDN a
+                            , toEDN b
+                            , toEDN c
+                            , toEDN d
+                            , toEDN e
+                            , toEDN f
+                            , toEDN g]
     {-# INLINE toEDNv #-}
 
 instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d, FromEDN e, FromEDN f, FromEDN g)
     => FromEDN (a, b, c, d, e, f, g) where
     parseEDNv v@(E.Vec vec)
-      | V.length vec == 7 = (,,,,,,) <$> (parseEDN (vec V.! 0))
-                                     <*> (parseEDN (vec V.! 1))
-                                     <*> (parseEDN (vec V.! 2))
-                                     <*> (parseEDN (vec V.! 3))
-                                     <*> (parseEDN (vec V.! 4))
-                                     <*> (parseEDN (vec V.! 5))
-                                     <*> (parseEDN (vec V.! 6))
+      | V.length vec == 7 = (,,,,,,) <$> parseEDN (vec V.! 0)
+                                     <*> parseEDN (vec V.! 1)
+                                     <*> parseEDN (vec V.! 2)
+                                     <*> parseEDN (vec V.! 3)
+                                     <*> parseEDN (vec V.! 4)
+                                     <*> parseEDN (vec V.! 5)
+                                     <*> parseEDN (vec V.! 6)
       | otherwise = typeMismatch "(a, b, c, d, e, f, g)" v
     parseEDNv v = typeMismatch "(a, b, c, d, e, f, g)" v
     {-# INLINE parseEDNv #-}
 
 instance (ToEDN a, ToEDN b, ToEDN c, ToEDN d, ToEDN e, ToEDN f, ToEDN g, ToEDN h)
     => ToEDN (a, b, c, d, e, f, g, h) where
-    toEDNv (a, b, c, d, e, f, g, h) = E.Vec $! V.fromList [
-                               toEDN a
-                             , toEDN b
-                             , toEDN c
-                             , toEDN d
-                             , toEDN e
-                             , toEDN f
-                             , toEDN g
-                             , toEDN h]
+    toEDNv (a, b, c, d, e, f, g, h) =
+        E.Vec $! V.fromList [ toEDN a
+                            , toEDN b
+                            , toEDN c
+                            , toEDN d
+                            , toEDN e
+                            , toEDN f
+                            , toEDN g
+                            , toEDN h]
     {-# INLINE toEDNv #-}
 
 instance (FromEDN a, FromEDN b, FromEDN c, FromEDN d,
           FromEDN e, FromEDN f, FromEDN g, FromEDN h)
     => FromEDN (a, b, c, d, e, f, g, h) where
     parseEDNv v@(E.Vec vec)
-      | V.length vec == 8 = (,,,,,,,) <$> (parseEDN (vec V.! 0))
-                                      <*> (parseEDN (vec V.! 1))
-                                      <*> (parseEDN (vec V.! 2))
-                                      <*> (parseEDN (vec V.! 3))
-                                      <*> (parseEDN (vec V.! 4))
-                                      <*> (parseEDN (vec V.! 5))
-                                      <*> (parseEDN (vec V.! 6))
-                                      <*> (parseEDN (vec V.! 7))
+      | V.length vec == 8 = (,,,,,,,) <$> parseEDN (vec V.! 0)
+                                      <*> parseEDN (vec V.! 1)
+                                      <*> parseEDN (vec V.! 2)
+                                      <*> parseEDN (vec V.! 3)
+                                      <*> parseEDN (vec V.! 4)
+                                      <*> parseEDN (vec V.! 5)
+                                      <*> parseEDN (vec V.! 6)
+                                      <*> parseEDN (vec V.! 7)
       | otherwise = typeMismatch "(a, b, c, d, e, f, g, h)" v
     parseEDNv v = typeMismatch "(a, b, c, d, e, f, g, h)" v
     {-# INLINE parseEDNv #-}
@@ -495,24 +494,24 @@ typeMismatch expected actual =
            " instead"
   where
     name = case actual of
-        E.Nil -> "Nil"
-        E.Boolean _ -> "Boolean"
-        E.String _ -> "String"
-        E.Character _ -> "Character"
-        E.Symbol _ _ -> "Symbol"
-        E.Keyword _ -> "Keyword"
-        E.Integer _ -> "Integer"
-        E.Floating _ -> "Floating"
-        E.List _ -> "List"
-        E.Vec _ -> "Vec"
-        E.Map _ -> "Map"
-        E.Set _ -> "Set"
+        E.Nil           -> "Nil"
+        E.Boolean   _   -> "Boolean"
+        E.String    _   -> "String"
+        E.Character _   -> "Character"
+        E.Symbol    _ _ -> "Symbol"
+        E.Keyword   _   -> "Keyword"
+        E.Integer   _   -> "Integer"
+        E.Floating  _   -> "Floating"
+        E.List      _   -> "List"
+        E.Vec       _   -> "Vec"
+        E.Map       _   -> "Map"
+        E.Set       _   -> "Set"
 
 mapMset :: (Monad m, Ord b)
         => (a -> m b)
         -> S.Set a
         -> m (S.Set b)
-mapMset f s = mapM f (S.toList s) >>= return . S.fromList
+mapMset f s = S.fromList <$> mapM f (S.toList s)
 {-# INLINE mapMset #-}
 
 mapMmap :: (Ord a2, Monad m)
