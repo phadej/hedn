@@ -41,6 +41,7 @@ library
       attoparsec,
       text,
       bytestring >=0.10,
+      scientific,
       utf8-string,
       containers,
       vector,
@@ -61,7 +62,7 @@ Test-Suite tests
   main-is:           Main.hs
   hs-source-dirs:    tests/
   build-depends:     base, hedn, bytestring, text, containers, vector, template-haskell, time,
-                     QuickCheck >= 2.5.1, hspec == 1.5.*, HUnit >= 1.2.5
+                     QuickCheck >= 2.5.1, hspec >= 1.5.1, HUnit >= 1.2.5
   ghc-options:       -Wall
   if flag(developer)
     ghc-options: -Werror -fhpc
