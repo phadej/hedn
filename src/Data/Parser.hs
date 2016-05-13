@@ -7,10 +7,12 @@ module Data.Parser (
     parse, parseMaybe, parseEither
 ) where
 
+import Prelude ()
+import Prelude.Compat
+
 import Control.Applicative
 import Control.DeepSeq (NFData(..))
 import Control.Monad.State.Strict
-import Data.Monoid (Monoid(..))
 import Data.Typeable (Typeable)
 
 -- | The result of running a 'Parser'.

@@ -10,6 +10,9 @@ module Data.EDN.Parser (
     parseValue, parseTagged
 ) where
 
+import Prelude ()
+import Prelude.Compat hiding (String, takeWhile)
+
 import           Control.Applicative              ((<|>))
 import           Data.Attoparsec.ByteString.Char8 as A
 import           Data.Attoparsec.Combinator       ()
@@ -24,7 +27,6 @@ import qualified Data.Text                        as T
 import qualified Data.Text.Encoding               as TE
 import qualified Data.Text.Lazy                   as TL
 import qualified Data.Text.Lazy.Encoding          as TLE
-import           Prelude                          hiding (String, takeWhile)
 
 import           Data.EDN.Types                   (Tagged (..), TaggedValue,
                                                    Value (..), makeMap, makeSet,

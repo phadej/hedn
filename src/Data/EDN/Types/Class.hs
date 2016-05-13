@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE IncoherentInstances #-}
 {-# LANGUAGE OverloadedStrings   #-}
@@ -12,6 +13,9 @@ module Data.EDN.Types.Class (
     (.=), (.:), (.:?), (.!=), typeMismatch
 ) where
 
+import Prelude ()
+import Prelude.Compat
+
 import           Control.Monad              (liftM, liftM2)
 import qualified Data.ByteString.Char8      as BS
 import qualified Data.ByteString.Lazy.Char8 as BSL
@@ -24,8 +28,12 @@ import qualified Data.Text.Encoding         as TE
 import qualified Data.Text.Lazy             as TL
 import qualified Data.Text.Lazy.Encoding    as TLE
 import           Data.Time.Clock            (UTCTime)
-import           Data.Time.Format           (defaultTimeLocale, formatTime,
-                                             parseTimeM)
+#if MIN_VERSION_time(1,5,0)
+import           Data.Time.Format           (formatTime, parseTimeM)
+#else
+import           Data.Time.Format           (formatTime, parseTime)
+#endif
+import           Data.Time.Locale.Compat    (defaultTimeLocale)
 import qualified Data.Vector                as V
 
 import qualified Data.EDN.Parser            as P
@@ -65,7 +73,7 @@ instance (ToEDN a) => ToEDN (Maybe a) where
 instance (FromEDN a) => (FromEDN (Maybe a)) where
     parseEDN (E.NoTag E.Nil) = pure Nothing
     parseEDN a = Just <$> parseEDN a
-    {-# INLINE parseEDNv #-}
+    {-# INLINE parseEDN #-}
 
 instance (ToEDN a, ToEDN b) => ToEDN (Either a b) where
     toEDN (Left a) = E.tag "either" "left" $ toEDNv a
@@ -213,7 +221,11 @@ instance FromEDN UTCTime where
           Nothing -> typeMismatch "UTCTime" $ E.stripTag val
       where
         tsStr = T.unpack ts
+#if MIN_VERSION_time(1,5,0)
         parseTime' fmt = parseTimeM True defaultTimeLocale fmt tsStr
+#else
+        parseTime' fmt = parseTime defaultTimeLocale fmt tsStr
+#endif
         validRFC3339 = [ "%FT%T%Q%z"
                        , "%FT%T%QZ"
                        , "%FT%T%z"
@@ -507,11 +519,11 @@ typeMismatch expected actual =
         E.Map       _   -> "Map"
         E.Set       _   -> "Set"
 
-mapMset :: (Monad m, Ord b)
+mapMset :: (Applicative m, Monad m, Ord b)
         => (a -> m b)
         -> S.Set a
         -> m (S.Set b)
-mapMset f s = S.fromList <$> mapM f (S.toList s)
+mapMset f s = S.fromList <$> traverse f (S.toList s)
 {-# INLINE mapMset #-}
 
 mapMmap :: (Ord a2, Monad m)
